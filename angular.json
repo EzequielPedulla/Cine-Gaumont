@@ -35,13 +35,8 @@
               "src/styles.scss"
             ],
             "scripts": [],
-            "server": "src/main.server.ts",
             "security": {
               "allowedHosts": []
-            },
-            "prerender": true,
-            "ssr": {
-              "entry": "src/server.ts"
             }
           },
           "configurations": {
@@ -106,5 +101,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

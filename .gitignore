@@ -41,7 +41,17 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Proyecto: material de la materia y referencias de diseño (no son código)
-/docs
+# Proyecto: material de la materia (PDFs) ignorado, pero el resumen de
+# requerimientos sí se versiona porque es un entregable de la consigna.
+/docs/*
+!/docs/requerimientos.md
 /claude.md
 /Diseño web responsive profesional-handoff/
+
+# Variables de entorno (Supabase URL/anon key) — nunca se suben.
+/.env
+/.env.*
+!/.env.example
+
+# Generado automáticamente por scripts/generate-env.js a partir de .env.
+/src/environments/environment.ts
