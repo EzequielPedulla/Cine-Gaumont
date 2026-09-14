@@ -41,10 +41,8 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Proyecto: material de la materia (PDFs) ignorado, pero el resumen de
-# requerimientos sí se versiona porque es un entregable de la consigna.
-/docs/*
-!/docs/requerimientos.md
+# Proyecto: carpeta docs/ entera afuera del repo (no se sube a GitHub).
+/docs
 /claude.md
 /Diseño web responsive profesional-handoff/
 
