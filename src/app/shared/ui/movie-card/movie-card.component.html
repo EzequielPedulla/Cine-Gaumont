@@ -1,0 +1,39 @@
+<article class="movie-card">
+  <div class="movie-card__poster">
+    @if (pelicula().imagen_url) {
+      <img [src]="pelicula().imagen_url" [alt]="'Póster de ' + pelicula().titulo" loading="lazy" />
+    } @else {
+      <div class="movie-card__poster-placeholder">
+        <i class="ph ph-film-slate"></i>
+      </div>
+    }
+
+    @if (pelicula().clasificacion_edad) {
+      <span class="movie-card__edad" [class.movie-card__edad--18]="pelicula().clasificacion_edad === 18">
+        +{{ pelicula().clasificacion_edad }}
+      </span>
+    }
+  </div>
+
+  <div class="movie-card__body">
+    <h3 class="movie-card__titulo">{{ pelicula().titulo }}</h3>
+
+    <div class="movie-card__generos">
+      @for (genero of pelicula().generos; track genero.id) {
+        <span class="pill">{{ genero.nombre }}</span>
+      }
+    </div>
+
+    <p class="movie-card__duracion">
+      <i class="ph ph-clock"></i>
+      {{ pelicula().duracion_min | duracion }}
+    </p>
+
+    @if (modo() === 'proximamente') {
+      <button type="button" class="btn btn--outline movie-card__cta" (click)="avisarme.emit()">
+        <i class="ph ph-bell"></i>
+        Avisarme
+      </button>
+    }
+  </div>
+</article>

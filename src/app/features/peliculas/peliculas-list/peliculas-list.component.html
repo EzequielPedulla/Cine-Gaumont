@@ -1,0 +1,55 @@
+<section class="cartelera">
+  <h1>Cartelera</h1>
+
+  <div class="filtros">
+    <label class="buscador">
+      <i class="ph ph-magnifying-glass"></i>
+      <input
+        type="search"
+        placeholder="Buscar película..."
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)"
+      />
+    </label>
+
+    @if (generosDisponibles().length > 0) {
+      <div class="generos-filtro">
+        @for (genero of generosDisponibles(); track genero.id) {
+          <button
+            type="button"
+            class="pill"
+            [class.is-selected]="generosSeleccionados().has(genero.id)"
+            (click)="toggleGenero(genero.id)"
+          >
+            {{ genero.nombre }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (cargando()) {
+    <p class="estado">Cargando cartelera...</p>
+  } @else if (error()) {
+    <p class="estado estado--error">{{ error() }}</p>
+  } @else if (carteleraFiltrada().length === 0) {
+    <p class="estado">No encontramos películas con esos filtros.</p>
+  } @else {
+    <div class="grid">
+      @for (pelicula of carteleraFiltrada(); track pelicula.id) {
+        <app-movie-card [pelicula]="pelicula" />
+      }
+    </div>
+  }
+</section>
+
+@if (proximamente().length > 0) {
+  <section class="proximamente" id="proximamente">
+    <h2>Próximamente</h2>
+    <div class="grid">
+      @for (pelicula of proximamente(); track pelicula.id) {
+        <app-movie-card [pelicula]="pelicula" modo="proximamente" />
+      }
+    </div>
+  </section>
+}

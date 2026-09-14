@@ -1,0 +1,80 @@
+.movie-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.movie-card__poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  background: var(--color-surface);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.movie-card__poster-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: 2rem;
+}
+
+.movie-card__edad {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-amber);
+  color: var(--color-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.movie-card__edad--18 {
+  background: var(--color-error);
+  color: var(--color-bg);
+}
+
+.movie-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.movie-card__titulo {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.movie-card__generos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.movie-card__duracion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.movie-card__cta {
+  margin-top: var(--space-2);
+  width: 100%;
+  justify-content: center;
+}
