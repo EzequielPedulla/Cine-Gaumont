@@ -1,0 +1,16 @@
+<header class="header">
+  <a routerLink="/" class="header__logo">
+    <i class="ph-fill ph-film-strip"></i>
+    <span>GAUMONT</span>
+  </a>
+
+  <nav class="header__nav">
+    <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Cartelera</a>
+    <a routerLink="/" fragment="proximamente">Próximamente</a>
+  </nav>
+
+  <div class="header__actions">
+    <a routerLink="/auth/login" class="btn btn--ghost">Iniciar sesión</a>
+    <a routerLink="/auth/registro" class="btn btn--primary">Registrarme</a>
+  </div>
+</header>

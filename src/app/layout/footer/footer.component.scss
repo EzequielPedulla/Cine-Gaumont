@@ -1,0 +1,27 @@
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8);
+  margin-top: var(--space-12);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-amber);
+}
+
+.footer__copy {
+  margin: 0;
+  font-size: 0.85rem;
+}
