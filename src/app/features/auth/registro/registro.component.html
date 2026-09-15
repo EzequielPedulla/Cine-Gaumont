@@ -1,0 +1,89 @@
+<section class="auth-page">
+  <form class="auth-card" [formGroup]="form" (ngSubmit)="enviar()">
+    <h1>Crear cuenta</h1>
+    <p class="auth-card__subtitulo">Registrate y llevate 20% de descuento en tu primera compra.</p>
+
+    <div class="campo-fila">
+      <label class="campo">
+        Nombre
+        <input type="text" formControlName="nombre" />
+        @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+          <span class="campo__error">Ingresá tu nombre.</span>
+        }
+      </label>
+      <label class="campo">
+        Apellido
+        <input type="text" formControlName="apellido" />
+        @if (form.get('apellido')?.invalid && form.get('apellido')?.touched) {
+          <span class="campo__error">Ingresá tu apellido.</span>
+        }
+      </label>
+    </div>
+
+    <div class="campo">
+      <span class="campo__label">Fecha de nacimiento</span>
+      <div class="fecha-nacimiento">
+        <select formControlName="dia" aria-label="Día">
+          <option [ngValue]="null" disabled>Día</option>
+          @for (dia of dias; track dia) {
+            <option [ngValue]="dia">{{ dia }}</option>
+          }
+        </select>
+        <select formControlName="mes" aria-label="Mes">
+          <option [ngValue]="null" disabled>Mes</option>
+          @for (mes of meses; track mes.valor) {
+            <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
+          }
+        </select>
+        <select formControlName="anio" aria-label="Año">
+          <option [ngValue]="null" disabled>Año</option>
+          @for (anio of anios; track anio) {
+            <option [ngValue]="anio">{{ anio }}</option>
+          }
+        </select>
+      </div>
+      @if ((form.get('dia')?.touched || form.get('mes')?.touched || form.get('anio')?.touched) &&
+        (form.get('dia')?.invalid || form.get('mes')?.invalid || form.get('anio')?.invalid)) {
+        <span class="campo__error">Completá tu fecha de nacimiento.</span>
+      }
+    </div>
+
+    <label class="campo">
+      Email
+      <input type="email" formControlName="email" />
+      @if (form.get('email')?.invalid && form.get('email')?.touched) {
+        <span class="campo__error">Ingresá un email válido.</span>
+      }
+    </label>
+
+    <div class="campo-fila">
+      <label class="campo">
+        Contraseña
+        <input type="password" formControlName="password" />
+        @if (form.get('password')?.invalid && form.get('password')?.touched) {
+          <span class="campo__error">Mínimo 6 caracteres.</span>
+        }
+      </label>
+      <label class="campo">
+        Confirmar contraseña
+        <input type="password" formControlName="confirmarPassword" />
+      </label>
+    </div>
+
+    @if (form.errors?.['passwordsDistintas'] && form.get('confirmarPassword')?.touched) {
+      <p class="auth-card__error">Las contraseñas no coinciden.</p>
+    }
+
+    @if (errorMsg()) {
+      <p class="auth-card__error">{{ errorMsg() }}</p>
+    }
+
+    <button type="submit" class="btn btn--primary auth-card__submit" [disabled]="enviando()">
+      {{ enviando() ? 'Creando cuenta...' : 'Registrarme' }}
+    </button>
+
+    <p class="auth-card__footer">
+      ¿Ya tenés cuenta? <a routerLink="/auth/login">Iniciar sesión</a>
+    </p>
+  </form>
+</section>

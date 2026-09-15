@@ -42,7 +42,22 @@
 
 .header__actions {
   display: flex;
+  align-items: center;
   gap: var(--space-3);
+}
+
+.header__usuario {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.header__puntos {
+  color: var(--color-accent-amber);
+  font-weight: 600;
 }
 
 @media (max-width: 640px) {

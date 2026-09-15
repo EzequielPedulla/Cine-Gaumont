@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -8,6 +9,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  // TODO(auth): cuando exista AuthService, reemplazar los botones de
-  // login/registro por el estado real del usuario (nombre + puntos).
+  readonly authService = inject(AuthService);
+
+  cerrarSesion(): void {
+    this.authService.cerrarSesion();
+  }
 }

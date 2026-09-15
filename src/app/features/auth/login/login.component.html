@@ -1,0 +1,36 @@
+<section class="auth-page">
+  <form class="auth-card" [formGroup]="form" (ngSubmit)="enviar()">
+    <h1>Iniciar sesión</h1>
+
+    <label class="campo">
+      Email
+      <input type="email" formControlName="email" />
+      @if (form.get('email')?.invalid && form.get('email')?.touched) {
+        <span class="campo__error">Ingresá un email válido.</span>
+      }
+    </label>
+
+    <label class="campo">
+      Contraseña
+      <input type="password" formControlName="password" />
+      @if (form.get('password')?.invalid && form.get('password')?.touched) {
+        <span class="campo__error">La contraseña es obligatoria.</span>
+      }
+    </label>
+
+    @if (errorMsg()) {
+      <p class="auth-card__error">{{ errorMsg() }}</p>
+    }
+
+    <button type="submit" class="btn btn--primary auth-card__submit" [disabled]="enviando()">
+      {{ enviando() ? 'Ingresando...' : 'Ingresar' }}
+    </button>
+
+    <p class="auth-card__footer">
+      ¿No tenés cuenta? <a routerLink="/auth/registro">Registrate</a>
+    </p>
+    <p class="auth-card__footer">
+      <a routerLink="/">Seguir como invitado</a>
+    </p>
+  </form>
+</section>
