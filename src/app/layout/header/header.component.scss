@@ -11,14 +11,7 @@
 
 .header__logo {
   display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
   text-decoration: none;
-  color: var(--color-accent-amber);
 }
 
 .header__nav {

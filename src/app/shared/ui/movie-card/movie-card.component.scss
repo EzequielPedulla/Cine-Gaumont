@@ -6,6 +6,8 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
 }
 
 .movie-card__poster {

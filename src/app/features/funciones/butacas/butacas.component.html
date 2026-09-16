@@ -1,0 +1,98 @@
+@if (cargando()) {
+  <p class="estado">Cargando mapa de butacas...</p>
+} @else if (compraConfirmada()) {
+  @if (compraConfirmada(); as compra) {
+    <section class="confirmacion">
+      <i class="ph-fill ph-check-circle confirmacion__icono"></i>
+      <h1>¡Compra confirmada!</h1>
+      <p>Guardá este código, lo vas a necesitar para entrar a la función.</p>
+      <p class="confirmacion__codigo">{{ compra.qrCode }}</p>
+      <p class="confirmacion__nota">
+        (El comprobante en PDF con el QR para escanear todavía está en construcción — por ahora este código sirve como referencia.)
+      </p>
+      <a routerLink="/" class="btn btn--primary">Volver al inicio</a>
+    </section>
+  }
+} @else if (error() && !funcion()) {
+  <p class="estado estado--error">{{ error() }}</p>
+} @else {
+  @if (funcion(); as funcion) {
+  <section class="butacas-page">
+    <header class="butacas-header">
+      <h1>{{ pelicula()?.titulo }}</h1>
+      <p class="butacas-header__meta">
+        {{ funcion.fecha_hora | date: "EEEE d 'de' MMMM, HH:mm" }} · {{ funcion.sala.nombre }} · {{ funcion.formato }}
+      </p>
+    </header>
+
+    @if (requiereLogin()) {
+      <p class="aviso aviso--bloqueo">
+        Esta película tiene restricción de edad (+{{ pelicula()?.clasificacion_edad }}). Iniciá sesión para poder comprar.
+      </p>
+    } @else if (bloqueadoPorEdad()) {
+      <p class="aviso aviso--bloqueo">No podés comprar entradas para esta película: es +{{ pelicula()?.clasificacion_edad }}.</p>
+    } @else if (pelicula()?.clasificacion_edad) {
+      <p class="aviso">Película +{{ pelicula()?.clasificacion_edad }}: si asisten menores, deben ir acompañados de un adulto.</p>
+    }
+
+    @if (avisoSeleccion()) {
+      <p class="aviso aviso--warning">{{ avisoSeleccion() }}</p>
+    }
+
+    <div class="pantalla">PANTALLA</div>
+
+    <div class="mapa" [class.mapa--deshabilitado]="!puedeComprar()">
+      @for (fila of layout; track fila.fila) {
+        <div class="mapa__fila">
+          <span class="mapa__letra">{{ fila.fila }}</span>
+          @for (bloque of fila.bloques; track $index) {
+            <div class="mapa__bloque">
+              @for (butaca of bloque; track butaca.columna) {
+                <button
+                  type="button"
+                  class="butaca"
+                  [class.butaca--vip]="butaca.tipo === 'vip'"
+                  [class.butaca--accesible]="butaca.tipo === 'accesible'"
+                  [class.butaca--ocupada]="estadoButaca(butaca) === 'ocupada'"
+                  [class.butaca--seleccionada]="estadoButaca(butaca) === 'seleccionada'"
+                  [disabled]="estadoButaca(butaca) === 'ocupada'"
+                  [attr.aria-label]="'Butaca ' + fila.fila + butaca.columna"
+                  (click)="toggleButaca(butaca)"
+                ></button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="leyenda">
+      <span class="leyenda__item"><i class="butaca"></i> Libre</span>
+      <span class="leyenda__item"><i class="butaca butaca--seleccionada"></i> Seleccionada</span>
+      <span class="leyenda__item"><i class="butaca butaca--ocupada"></i> Ocupada</span>
+      <span class="leyenda__item"><i class="butaca butaca--vip"></i> VIP</span>
+      <span class="leyenda__item"><i class="butaca butaca--accesible"></i> Accesible</span>
+    </div>
+
+    <footer class="resumen">
+      <div class="resumen__info">
+        <strong>{{ seleccionadas().size }}</strong> butaca(s) seleccionada(s)
+        <span class="resumen__total">{{ totalSeleccion() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+      </div>
+
+      @if (error()) {
+        <p class="aviso aviso--bloqueo">{{ error() }}</p>
+      }
+
+      <button
+        type="button"
+        class="btn btn--primary"
+        [disabled]="seleccionadas().size === 0 || comprando() || !puedeComprar()"
+        (click)="confirmarCompra()"
+      >
+        {{ comprando() ? 'Confirmando...' : 'Confirmar compra' }}
+      </button>
+    </footer>
+  </section>
+  }
+}

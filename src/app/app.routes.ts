@@ -13,5 +13,14 @@ export const routes: Routes = [
     path: 'auth/registro',
     loadComponent: () => import('./features/auth/registro/registro.component').then((m) => m.RegistroComponent)
   },
+  {
+    path: 'peliculas/:peliculaId/funciones',
+    loadComponent: () =>
+      import('./features/funciones/seleccion-funcion/seleccion-funcion.component').then((m) => m.SeleccionFuncionComponent)
+  },
+  {
+    path: 'funciones/:funcionId/butacas',
+    loadComponent: () => import('./features/funciones/butacas/butacas.component').then((m) => m.ButacasComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

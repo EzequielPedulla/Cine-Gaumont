@@ -1,0 +1,40 @@
+@if (cargando()) {
+  <p class="estado">Cargando funciones...</p>
+} @else if (error()) {
+  <p class="estado estado--error">{{ error() }}</p>
+} @else {
+  @if (pelicula(); as pelicula) {
+    <section class="seleccion">
+    <header class="seleccion__header">
+      @if (pelicula.imagen_url) {
+        <img [src]="pelicula.imagen_url" [alt]="'Póster de ' + pelicula.titulo" class="seleccion__poster" />
+      }
+      <div>
+        <h1>{{ pelicula.titulo }}</h1>
+        <p class="seleccion__meta">{{ pelicula.duracion_min | duracion }}</p>
+        <p class="seleccion__sinopsis">{{ pelicula.sinopsis }}</p>
+      </div>
+    </header>
+
+    @if (gruposPorDia().length === 0) {
+      <p class="estado">Todavía no hay funciones programadas para esta película.</p>
+    } @else {
+      @for (grupo of gruposPorDia(); track grupo.fecha) {
+        <div class="dia">
+          <h2 class="dia__titulo">{{ grupo.etiqueta }}</h2>
+          <div class="dia__horarios">
+            @for (funcion of grupo.funciones; track funcion.id) {
+              <button type="button" class="horario" (click)="irAButacas(funcion.id)">
+                <span class="horario__hora">{{ funcion.fecha_hora | date: 'HH:mm' }}</span>
+                <span class="horario__sala">{{ funcion.sala.nombre }}</span>
+                <span class="pill">{{ funcion.formato }}</span>
+                <span class="pill">{{ funcion.idioma === 'castellano' ? 'DOB' : 'SUB' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    }
+  </section>
+  }
+}

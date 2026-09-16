@@ -1,0 +1,10 @@
+.logo {
+  height: 90px;
+  width: auto;
+  display: block;
+  // La imagen no tiene canal alfa: "lighten" compara cada píxel contra el
+  // fondo real del header/footer y se queda con el más claro de los dos.
+  // Como el navy del PNG es más oscuro que el fondo, desaparece y solo
+  // quedan visibles la luz, el punto y el texto.
+  mix-blend-mode: lighten;
+}

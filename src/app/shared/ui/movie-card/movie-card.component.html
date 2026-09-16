@@ -1,4 +1,4 @@
-<article class="movie-card">
+<a class="movie-card" [routerLink]="modo() === 'cartelera' ? ['/peliculas', pelicula().id, 'funciones'] : null">
   <div class="movie-card__poster">
     @if (pelicula().imagen_url) {
       <img [src]="pelicula().imagen_url" [alt]="'Póster de ' + pelicula().titulo" loading="lazy" />
@@ -36,4 +36,4 @@
       </button>
     }
   </div>
-</article>
+</a>

@@ -1,0 +1,86 @@
+:host {
+  display: block;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.estado {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-8) 0;
+}
+
+.estado--error {
+  color: var(--color-error);
+}
+
+.seleccion__header {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.seleccion__poster {
+  width: 120px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.seleccion__meta {
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0;
+}
+
+.seleccion__sinopsis {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dia {
+  margin-bottom: var(--space-6);
+}
+
+.dia__titulo {
+  text-transform: capitalize;
+  margin-bottom: var(--space-3);
+}
+
+.dia__horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.horario {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-card);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-body);
+
+  &:hover {
+    border-color: var(--color-accent-amber);
+  }
+}
+
+.horario__hora {
+  font-weight: 700;
+}
+
+.horario__sala {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .seleccion__header {
+    flex-direction: column;
+  }
+}
