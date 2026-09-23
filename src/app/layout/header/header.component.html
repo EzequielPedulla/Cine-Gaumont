@@ -6,6 +6,9 @@
   <nav class="header__nav">
     <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Cartelera</a>
     <a routerLink="/" fragment="proximamente">Próximamente</a>
+    @if (authService.esAdmin()) {
+      <a routerLink="/admin" routerLinkActive="is-active">Admin</a>
+    }
   </nav>
 
   <div class="header__actions">

@@ -32,5 +32,11 @@
     <p class="auth-card__footer">
       <a routerLink="/">Seguir como invitado</a>
     </p>
+
+    @if (esHostLocal) {
+      <button type="button" class="dev-admin-btn" (click)="entrarComoAdminDev()" title="Solo visible en localhost">
+        🛠 dev: admin
+      </button>
+    }
   </form>
 </section>

@@ -23,9 +23,17 @@ function loadEnvFile(filePath) {
 }
 
 const rootDir = path.join(__dirname, '..');
-const env = loadEnvFile(path.join(rootDir, '.env'));
+const envFile = loadEnvFile(path.join(rootDir, '.env'));
 
+// En local, los valores salen del .env. En Vercel (que no sube el .env,
+// está en .gitignore) no hay archivo: ahí caemos a las variables de
+// entorno que configuraste en el dashboard del proyecto.
 const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+const env = {};
+for (const key of required) {
+  env[key] = envFile[key] || process.env[key];
+}
+
 const missing = required.filter((key) => !env[key]);
 
 if (missing.length > 0) {

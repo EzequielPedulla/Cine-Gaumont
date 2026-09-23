@@ -59,7 +59,12 @@ export class ButacasService {
       .select()
       .single();
 
-    if (errorCompra) throw new Error('No pudimos generar la compra. Probá de nuevo.');
+    if (errorCompra) {
+      // El detalle técnico queda en consola para nosotros; al cliente le
+      // mostramos un mensaje que pueda entender, no el error crudo de Postgres.
+      console.error('Error al insertar en compras:', errorCompra);
+      throw new Error('No pudimos generar la compra. Volvé a intentar en un momento; si el problema sigue, contactanos.');
+    }
 
     const { error: errorButacas } = await this.supabase.client.from('reservas_butacas').insert(
       datos.butacas.map((butaca) => ({

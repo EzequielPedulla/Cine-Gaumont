@@ -24,3 +24,7 @@ export interface Funcion {
 export interface FuncionConSala extends Funcion {
   sala: Sala;
 }
+
+export interface FuncionConDetalle extends FuncionConSala {
+  pelicula: { titulo: string };
+}

@@ -1,0 +1,11 @@
+@if (servicio.solicitud(); as solicitud) {
+  <div class="overlay" (click)="solicitud.resolver(false)">
+    <div class="dialogo" role="alertdialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <p class="dialogo__mensaje">{{ solicitud.mensaje }}</p>
+      <div class="dialogo__acciones">
+        <button type="button" class="btn btn--ghost" (click)="solicitud.resolver(false)">Cancelar</button>
+        <button type="button" class="btn btn--primary" (click)="solicitud.resolver(true)">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}

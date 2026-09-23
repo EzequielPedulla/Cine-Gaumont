@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,26 @@ export const routes: Routes = [
   {
     path: 'funciones/:funcionId/butacas',
     loadComponent: () => import('./features/funciones/butacas/butacas.component').then((m) => m.ButacasComponent)
+  },
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/admin-shell/admin-shell.component').then((m) => m.AdminShellComponent),
+    children: [
+      { path: '', redirectTo: 'peliculas', pathMatch: 'full' },
+      {
+        path: 'peliculas',
+        loadComponent: () => import('./features/admin/admin-peliculas/admin-peliculas.component').then((m) => m.AdminPeliculasComponent)
+      },
+      {
+        path: 'salas',
+        loadComponent: () => import('./features/admin/admin-salas/admin-salas.component').then((m) => m.AdminSalasComponent)
+      },
+      {
+        path: 'funciones',
+        loadComponent: () => import('./features/admin/admin-funciones/admin-funciones.component').then((m) => m.AdminFuncionesComponent)
+      }
+    ]
   },
   { path: '**', redirectTo: '' }
 ];

@@ -1,0 +1,119 @@
+<div class="admin-peliculas">
+  <header class="admin-peliculas__header">
+    <h1>Películas</h1>
+    <button type="button" class="btn btn--primary" (click)="nuevaPelicula()">+ Nueva película</button>
+  </header>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <form class="form-pelicula" [formGroup]="form" (ngSubmit)="guardar()">
+      <h2>{{ peliculaEditando() ? 'Editar película' : 'Nueva película' }}</h2>
+
+      <label class="campo">
+        Título
+        <input type="text" formControlName="titulo" />
+        @if (form.get('titulo')?.invalid && form.get('titulo')?.touched) {
+          <span class="campo__error">El título es obligatorio.</span>
+        }
+      </label>
+
+      <label class="campo">
+        Sinopsis
+        <textarea formControlName="sinopsis" rows="3"></textarea>
+        @if (form.get('sinopsis')?.invalid && form.get('sinopsis')?.touched) {
+          <span class="campo__error">La sinopsis es obligatoria.</span>
+        }
+      </label>
+
+      <div class="campo-fila">
+        <label class="campo">
+          Duración (minutos)
+          <input type="number" formControlName="duracion_min" min="1" />
+          @if (form.get('duracion_min')?.invalid && form.get('duracion_min')?.touched) {
+            <span class="campo__error">Ingresá una duración válida (mayor a 0).</span>
+          }
+        </label>
+        <label class="campo">
+          Clasificación de edad
+          <select formControlName="clasificacion_edad">
+            <option value="">Sin restricción</option>
+            <option value="13">+13</option>
+            <option value="18">+18</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="campo-fila">
+        <label class="campo">
+          URL de imagen (póster)
+          <input type="text" formControlName="imagen_url" placeholder="https://..." />
+        </label>
+        <label class="campo">
+          Fecha de estreno
+          <input type="date" formControlName="fecha_estreno" />
+        </label>
+      </div>
+
+      <div class="campo">
+        <span class="campo__label">Géneros</span>
+        <div class="generos-checks">
+          @for (genero of generosDisponibles(); track genero.id) {
+            <label class="genero-check">
+              <input type="checkbox" [checked]="generosSeleccionados().has(genero.id)" (change)="toggleGenero(genero.id)" />
+              {{ genero.nombre }}
+            </label>
+          }
+        </div>
+      </div>
+
+      <label class="campo campo--checkbox">
+        <input type="checkbox" formControlName="activa" />
+        Visible en el catálogo
+      </label>
+
+      <div class="form-pelicula__acciones">
+        <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Duración</th>
+          <th>Edad</th>
+          <th>Visible</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (pelicula of peliculas(); track pelicula.id) {
+          <tr>
+            <td>{{ pelicula.titulo }}</td>
+            <td>{{ pelicula.duracion_min | duracion }}</td>
+            <td>{{ pelicula.clasificacion_edad ? '+' + pelicula.clasificacion_edad : '—' }}</td>
+            <td>{{ pelicula.activa ? 'Sí' : 'No' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="editar(pelicula)">Editar</button>
+              <button type="button" class="btn btn--ghost" (click)="eliminar(pelicula)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="estado">Todavía no hay películas cargadas.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

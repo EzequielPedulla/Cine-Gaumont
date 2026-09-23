@@ -1,0 +1,32 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+}
+
+.dialogo {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-6);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.dialogo__mensaje {
+  margin: 0 0 var(--space-6);
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.dialogo__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

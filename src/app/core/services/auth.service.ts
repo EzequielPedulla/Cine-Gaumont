@@ -41,9 +41,12 @@ export class AuthService {
   readonly esEmpleado = computed(() => this.perfil()?.rol === 'empleado' || this.esAdmin());
 
   constructor() {
-    this.supabase.client.auth.getSession().then(({ data }) => {
+    this.supabase.client.auth.getSession().then(async ({ data }) => {
       this.session.set(data.session);
-      if (data.session) this.cargarPerfil(data.session.user.id);
+      // Esperamos a que el perfil (de donde sale esAdmin) esté cargado
+      // ANTES de marcar la sesión como resuelta — si no, un guard que
+      // espera cargandoSesion=false puede leer esAdmin() todavía en false.
+      if (data.session) await this.cargarPerfil(data.session.user.id);
       this.cargandoSesion.set(false);
     });
 
@@ -58,25 +61,26 @@ export class AuthService {
   }
 
   async registrarse(datos: DatosRegistro): Promise<void> {
+    // nombre/apellido/fecha_nacimiento viajan como metadata del signUp: un
+    // trigger en la base (docs/migraciones/008) los lee y crea la fila de
+    // usuarios_perfil en la misma transacción en la que se crea el usuario
+    // — así no puede quedar un usuario de Auth sin perfil asociado.
     const { data, error } = await this.supabase.client.auth.signUp({
       email: datos.email,
-      password: datos.password
+      password: datos.password,
+      options: {
+        data: {
+          nombre: datos.nombre,
+          apellido: datos.apellido,
+          fecha_nacimiento: datos.fechaNacimiento
+        }
+      }
     });
     if (error) {
       throw new Error(mensajeAmigable(error, 'No pudimos completar el registro. Intentá de nuevo.'));
     }
     if (!data.user) {
       throw new Error('No pudimos completar el registro. Intentá de nuevo.');
-    }
-
-    const { error: errorPerfil } = await this.supabase.client.from('usuarios_perfil').insert({
-      id: data.user.id,
-      nombre: datos.nombre,
-      apellido: datos.apellido,
-      fecha_nacimiento: datos.fechaNacimiento
-    });
-    if (errorPerfil) {
-      throw new Error('Creamos tu cuenta pero no pudimos guardar tu perfil. Escribinos si el problema persiste.');
     }
 
     await this.cargarPerfil(data.user.id);

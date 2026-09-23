@@ -1,0 +1,149 @@
+<div class="admin-funciones">
+  <h1>Funciones</h1>
+  <p class="ayuda">La sala se asigna automáticamente: elegís película, día y horario, y el sistema busca una sala libre (respetando 30 min de margen entre funciones).</p>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+  @if (mensajeExito()) {
+    <p class="aviso aviso--exito">{{ mensajeExito() }}</p>
+  }
+
+  <form class="form-funcion" [formGroup]="form" (ngSubmit)="crear()">
+    <label class="campo">
+      Película
+      <select formControlName="peliculaId">
+        <option value="" disabled>Elegí una película</option>
+        @for (pelicula of peliculas(); track pelicula.id) {
+          <option [value]="pelicula.id">{{ pelicula.titulo }}</option>
+        }
+      </select>
+      @if (form.get('peliculaId')?.invalid && form.get('peliculaId')?.touched) {
+        <span class="campo__error">Elegí una película.</span>
+      }
+    </label>
+
+    <div class="campo-fila">
+      <label class="campo">
+        {{ form.value.repetir ? 'Desde' : 'Fecha' }}
+        <input type="date" formControlName="fecha" />
+        @if (form.get('fecha')?.invalid && form.get('fecha')?.touched) {
+          <span class="campo__error">Elegí una fecha.</span>
+        }
+      </label>
+      <label class="campo">
+        Hora
+        <input type="time" formControlName="hora" />
+        @if (form.get('hora')?.invalid && form.get('hora')?.touched) {
+          <span class="campo__error">Elegí un horario.</span>
+        }
+      </label>
+    </div>
+
+    <label class="campo campo--checkbox">
+      <input type="checkbox" formControlName="repetir" />
+      Repetir semanalmente (mismo horario, varios días)
+    </label>
+
+    @if (form.value.repetir) {
+      <div class="repetir-box">
+        <div class="campo">
+          <span class="campo__label">Días</span>
+          <div class="dias-semana">
+            @for (dia of diasSemanaOpciones; track dia.valor) {
+              <button
+                type="button"
+                class="pill"
+                [class.is-selected]="diasSemanaSeleccionados().has(dia.valor)"
+                (click)="toggleDia(dia.valor)"
+              >
+                {{ dia.nombre }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <label class="campo">
+          Hasta
+          <input type="date" formControlName="fechaHasta" />
+          @if (form.value.repetir && !form.value.fechaHasta && form.get('fechaHasta')?.touched) {
+            <span class="campo__error">Elegí hasta qué fecha repetir.</span>
+          }
+        </label>
+      </div>
+    }
+
+    <div class="campo-fila">
+      <label class="campo">
+        Formato
+        <select formControlName="formato">
+          <option value="2D">2D</option>
+          <option value="3D">3D</option>
+          <option value="4D">4D</option>
+          <option value="5D">5D</option>
+        </select>
+      </label>
+      <label class="campo">
+        Idioma
+        <select formControlName="idioma">
+          <option value="castellano">Castellano</option>
+          <option value="subtitulada">Subtitulada</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="campo-fila">
+      <label class="campo">
+        Precio base
+        <input type="number" formControlName="precioBase" min="0" />
+        @if (form.get('precioBase')?.invalid && form.get('precioBase')?.touched) {
+          <span class="campo__error">Ingresá un precio válido (0 o más).</span>
+        }
+      </label>
+      <label class="campo">
+        Precio VIP
+        <input type="number" formControlName="precioVip" min="0" />
+        @if (form.get('precioVip')?.invalid && form.get('precioVip')?.touched) {
+          <span class="campo__error">Ingresá un precio válido (0 o más).</span>
+        }
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+      {{ guardando() ? 'Asignando sala...' : 'Crear función' }}
+    </button>
+  </form>
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Película</th>
+          <th>Fecha y hora</th>
+          <th>Sala</th>
+          <th>Formato</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (funcion of funciones(); track funcion.id) {
+          <tr>
+            <td>{{ funcion.pelicula.titulo }}</td>
+            <td>{{ funcion.fecha_hora | date: "d/MM/yy HH:mm" }}</td>
+            <td>{{ funcion.sala.nombre }}</td>
+            <td>{{ funcion.formato }} · {{ funcion.idioma === 'castellano' ? 'DOB' : 'SUB' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="eliminar(funcion)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="estado">Todavía no hay funciones cargadas.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

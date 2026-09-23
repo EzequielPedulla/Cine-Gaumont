@@ -1,0 +1,46 @@
+<div class="admin-salas">
+  <h1>Salas</h1>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  <form class="form-inline" [formGroup]="form" (ngSubmit)="crear()">
+    <label class="campo">
+      <input type="text" formControlName="nombre" placeholder="Nombre de la sala (ej. Sala 4)" />
+      @if (form.get('nombre')?.invalid && form.get('nombre')?.touched) {
+        <span class="campo__error">El nombre es obligatorio.</span>
+      }
+    </label>
+    <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+      {{ guardando() ? 'Creando...' : '+ Agregar' }}
+    </button>
+  </form>
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sala of salas(); track sala.id) {
+          <tr>
+            <td>{{ sala.nombre }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="eliminar(sala)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="2" class="estado">Todavía no hay salas cargadas.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
