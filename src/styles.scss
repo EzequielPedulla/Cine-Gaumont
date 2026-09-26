@@ -120,3 +120,17 @@ img {
   background: var(--color-accent-teal);
   color: var(--color-bg);
 }
+
+/* Comprobante de compra (butacas.component): al imprimir/"Guardar como PDF",
+   ocultamos todo el marco del sitio y dejamos solo el ticket. */
+@media print {
+  app-header,
+  app-footer,
+  app-confirm-dialog {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+}

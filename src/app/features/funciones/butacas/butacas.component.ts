@@ -1,6 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import * as QRCode from 'qrcode';
 import { FuncionesService } from '../../../core/services/funciones.service';
 import { PeliculasService } from '../../../core/services/peliculas.service';
 import { ButacaSeleccionada, ButacasService } from '../../../core/services/butacas.service';
@@ -9,6 +10,18 @@ import { FuncionConSala } from '../../../core/models/funcion.model';
 import { PeliculaConGeneros } from '../../../core/models/pelicula.model';
 import { ReservaButaca } from '../../../core/models/compra.model';
 import { Butaca, generarLayoutSala } from '../../../core/sala-layout';
+
+export interface ButacaComprada extends ButacaSeleccionada {
+  esVip: boolean;
+}
+
+export interface Comprobante {
+  compraId: string;
+  qrCode: string;
+  qrImagenUrl: string;
+  butacas: ButacaComprada[];
+  total: number;
+}
 
 function claveButaca(fila: string, columna: number): string {
   return `${fila}-${columna}`;
@@ -43,7 +56,7 @@ export class ButacasComponent {
   readonly error = signal<string | null>(null);
   readonly comprando = signal(false);
   readonly avisoSeleccion = signal<string | null>(null);
-  readonly compraConfirmada = signal<{ compraId: string; qrCode: string } | null>(null);
+  readonly compraConfirmada = signal<Comprobante | null>(null);
 
   readonly edadUsuario = computed<number | null>(() => {
     const fechaNacimiento = this.authService.perfil()?.fecha_nacimiento;
@@ -121,15 +134,28 @@ export class ButacasComponent {
         return { fila, columna: Number(columnaTexto) };
       });
 
+      const total = this.totalSeleccion();
       const resultado = await this.butacasService.confirmarCompra({
         funcionId: funcion.id,
         butacas,
         usuarioId: this.authService.session()?.user.id ?? null,
-        subtotal: this.totalSeleccion(),
-        total: this.totalSeleccion()
+        subtotal: total,
+        total
       });
 
-      this.compraConfirmada.set(resultado);
+      // El QR se genera en el cliente a partir del código de la compra: es
+      // una imagen (dataURL) que cualquier lector de QR puede escanear, no
+      // solo un string — así el comprobante impreso sirve de verdad en la
+      // puerta de la sala.
+      const qrImagenUrl = await QRCode.toDataURL(resultado.qrCode, { width: 220, margin: 1 });
+
+      this.compraConfirmada.set({
+        compraId: resultado.compraId,
+        qrCode: resultado.qrCode,
+        qrImagenUrl,
+        butacas: butacas.map((b) => ({ ...b, esVip: esVip(b.fila) })).sort((a, b) => a.fila.localeCompare(b.fila) || a.columna - b.columna),
+        total
+      });
       this.seleccionadas.set(new Set());
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No pudimos completar la compra.');
@@ -137,6 +163,14 @@ export class ButacasComponent {
     } finally {
       this.comprando.set(false);
     }
+  }
+
+  // El "PDF" es el propio diálogo de impresión del navegador: styles.scss
+  // define un @media print que oculta todo menos el comprobante, así que
+  // "Guardar como PDF" ahí ya da un archivo prolijo sin sumar una librería
+  // de generación de PDF solo para esto.
+  imprimirComprobante(): void {
+    window.print();
   }
 
   private async cargar(funcionId: string): Promise<void> {
