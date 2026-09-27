@@ -16,6 +16,68 @@
       </div>
     </header>
 
+    <section class="resenas">
+      <div class="resenas__resumen">
+        @if (promedio(); as promedio) {
+          <div class="estrellas estrellas--lectura">
+            @for (n of [1, 2, 3, 4, 5]; track n) {
+              <i class="ph-fill ph-star" [class.is-apagada]="n > promedio + 0.25"></i>
+            }
+          </div>
+          <span class="resenas__promedio">{{ promedio.toFixed(1) }} · {{ resenas().length }} reseña(s)</span>
+        } @else {
+          <span class="resenas__promedio">Todavía no tiene reseñas.</span>
+        }
+      </div>
+
+      @if (authService.estaLogueado()) {
+        <div class="resenas__form">
+          <p class="resenas__form-titulo">{{ miResena() ? 'Editá tu reseña' : 'Dejá tu reseña' }}</p>
+          <div class="estrellas">
+            @for (n of [1, 2, 3, 4, 5]; track n) {
+              <button type="button" class="estrellas__boton" (click)="elegirEstrellas(n)" [attr.aria-label]="n + ' estrellas'">
+                <i class="ph-fill ph-star" [class.is-apagada]="n > estrellasElegidas()"></i>
+              </button>
+            }
+          </div>
+          <textarea
+            class="resenas__comentario"
+            placeholder="Comentario corto (opcional)"
+            [value]="comentario()"
+            (input)="comentario.set($any($event.target).value)"
+          ></textarea>
+          @if (errorResena()) {
+            <p class="aviso aviso--bloqueo">{{ errorResena() }}</p>
+          }
+          <button type="button" class="btn btn--outline" [disabled]="enviandoResena()" (click)="enviarResena()">
+            {{ enviandoResena() ? 'Guardando...' : miResena() ? 'Actualizar reseña' : 'Publicar reseña' }}
+          </button>
+        </div>
+      } @else {
+        <p class="resenas__login">
+          <a routerLink="/auth/login">Iniciá sesión</a> para dejar tu reseña.
+        </p>
+      }
+
+      @if (resenas().length > 0) {
+        <ul class="resenas__lista">
+          @for (resena of resenas(); track resena.id) {
+            <li class="resena">
+              <div class="estrellas estrellas--lectura">
+                @for (n of [1, 2, 3, 4, 5]; track n) {
+                  <i class="ph-fill ph-star" [class.is-apagada]="n > resena.estrellas"></i>
+                }
+              </div>
+              <strong>{{ resena.autor_nombre }}</strong>
+              @if (resena.comentario) {
+                <p>{{ resena.comentario }}</p>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
     @if (gruposPorDia().length === 0) {
       <p class="estado">Todavía no hay funciones programadas para esta película.</p>
     } @else {
