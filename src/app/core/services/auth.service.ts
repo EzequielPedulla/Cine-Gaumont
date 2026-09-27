@@ -97,6 +97,15 @@ export class AuthService {
     await this.supabase.client.auth.signOut();
   }
 
+  // Para cuando algo cambia el perfil por fuera de un evento de auth (ej.
+  // los puntos de fidelidad que acredita el trigger de una compra): sin
+  // esto, el signal `perfil` quedaría desactualizado hasta el próximo
+  // login o F5.
+  async recargarPerfil(): Promise<void> {
+    const usuarioId = this.session()?.user.id;
+    if (usuarioId) await this.cargarPerfil(usuarioId);
+  }
+
   private async cargarPerfil(usuarioId: string): Promise<void> {
     const { data } = await this.supabase.client.from('usuarios_perfil').select('*').eq('id', usuarioId).maybeSingle<UsuarioPerfil>();
     this.perfil.set(data ?? null);

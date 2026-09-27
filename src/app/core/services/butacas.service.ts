@@ -47,6 +47,12 @@ export class ButacasService {
   async confirmarCompra(datos: DatosCompra): Promise<CompraConfirmada> {
     const qrCode = crypto.randomUUID();
 
+    // 1 punto de fidelidad por cada peso gastado, solo si hay usuario
+    // registrado (no en compras anónimas). El trigger `acreditar_puntos_compra`
+    // (docs/migraciones/012) es el que realmente suma esto a
+    // usuarios_perfil.puntos_fidelidad al insertarse la compra.
+    const puntosGanados = datos.usuarioId ? Math.floor(datos.total) : 0;
+
     const { data: compra, error: errorCompra } = await this.supabase.client
       .from('compras')
       .insert({
@@ -54,6 +60,7 @@ export class ButacasService {
         funcion_id: datos.funcionId,
         subtotal: datos.subtotal,
         total: datos.total,
+        puntos_ganados: puntosGanados,
         qr_code: qrCode
       })
       .select()

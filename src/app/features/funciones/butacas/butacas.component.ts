@@ -157,6 +157,10 @@ export class ButacasComponent {
         total
       });
       this.seleccionadas.set(new Set());
+
+      // Refresca los puntos de fidelidad que acaba de acreditar el trigger
+      // de la compra, así el header/perfil los muestra al instante.
+      await this.authService.recargarPerfil();
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No pudimos completar la compra.');
       await this.recargarOcupadas(funcion.id);
