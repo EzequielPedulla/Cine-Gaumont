@@ -32,7 +32,24 @@
 
     <p class="perfil__nota">
       Sumás 1 punto de fidelidad por cada peso gastado en una compra. El crédito se carga acá cuando cancelás una entrada con
-      más de 2 horas de anticipación. (Canjear puntos por recompensas y cancelar compras todavía están en construcción.)
+      más de 2 horas de anticipación (desde "Mis películas").
     </p>
+
+    @if (historial().length > 0) {
+      <section class="perfil__seccion">
+        <h2>Historial de canjes</h2>
+        <p class="perfil__nota" style="margin-bottom: var(--space-3)">
+          Los puntos se canjean directo al comprar una entrada (aparece la opción si te alcanzan).
+        </p>
+        <ul class="lista-historial">
+          @for (canje of historial(); track canje.id) {
+            <li>
+              {{ canje.recompensa.nombre }} · {{ canje.puntos_gastados }} pts ·
+              {{ canje.creado_en | date: 'd/MM/yy' }}
+            </li>
+          }
+        </ul>
+      </section>
+    }
   </section>
 }

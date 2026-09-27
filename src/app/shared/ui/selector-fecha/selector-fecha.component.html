@@ -1,0 +1,20 @@
+<div class="selector-fecha">
+  <select [formControl]="controlDia()" aria-label="Día">
+    <option [ngValue]="null" disabled>Día</option>
+    @for (dia of dias; track dia) {
+      <option [ngValue]="dia">{{ dia }}</option>
+    }
+  </select>
+  <select [formControl]="controlMes()" aria-label="Mes">
+    <option [ngValue]="null" disabled>Mes</option>
+    @for (mes of meses; track mes.valor) {
+      <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
+    }
+  </select>
+  <select [formControl]="controlAnio()" aria-label="Año">
+    <option [ngValue]="null" disabled>Año</option>
+    @for (anio of anios(); track anio) {
+      <option [ngValue]="anio">{{ anio }}</option>
+    }
+  </select>
+</div>

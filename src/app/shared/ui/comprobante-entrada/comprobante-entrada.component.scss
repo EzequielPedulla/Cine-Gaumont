@@ -56,6 +56,23 @@
   }
 }
 
+.comprobante__candy {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px dashed #c7c2b8;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comprobante__credito {
+  color: #2f8f5b;
+  font-size: 0.85rem;
+  margin: 0 0 2px;
+}
+
 .comprobante__total {
   font-weight: 700;
   margin-bottom: var(--space-4);

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SelectorFechaComponent } from '../../../shared/ui/selector-fecha/selector-fecha.component';
 
 function passwordsIgualesValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -11,7 +12,7 @@ function passwordsIgualesValidator(control: AbstractControl): ValidationErrors |
 
 @Component({
   selector: 'app-registro',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, SelectorFechaComponent],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.scss'
 })
@@ -23,21 +24,6 @@ export class RegistroComponent {
   readonly enviando = signal(false);
   readonly errorMsg = signal<string | null>(null);
 
-  readonly dias = Array.from({ length: 31 }, (_, i) => i + 1);
-  readonly meses = [
-    { valor: 1, nombre: 'Enero' },
-    { valor: 2, nombre: 'Febrero' },
-    { valor: 3, nombre: 'Marzo' },
-    { valor: 4, nombre: 'Abril' },
-    { valor: 5, nombre: 'Mayo' },
-    { valor: 6, nombre: 'Junio' },
-    { valor: 7, nombre: 'Julio' },
-    { valor: 8, nombre: 'Agosto' },
-    { valor: 9, nombre: 'Septiembre' },
-    { valor: 10, nombre: 'Octubre' },
-    { valor: 11, nombre: 'Noviembre' },
-    { valor: 12, nombre: 'Diciembre' }
-  ];
   private readonly anioActual = new Date().getFullYear();
   readonly anios = Array.from({ length: 100 }, (_, i) => this.anioActual - i);
 

@@ -8,10 +8,14 @@ import { PeliculasService } from '../../../core/services/peliculas.service';
 import { ButacaSeleccionada, ButacasService } from '../../../core/services/butacas.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CuponesService } from '../../../core/services/cupones.service';
+import { RecompensasService } from '../../../core/services/recompensas.service';
+import { CandyService } from '../../../core/services/candy.service';
 import { FuncionConSala } from '../../../core/models/funcion.model';
 import { PeliculaConGeneros } from '../../../core/models/pelicula.model';
 import { ReservaButaca } from '../../../core/models/compra.model';
 import { Cupon } from '../../../core/models/cupon.model';
+import { Recompensa } from '../../../core/models/recompensa.model';
+import { CategoriaCandy, ProductoCandy } from '../../../core/models/candy.model';
 import { Butaca, generarLayoutSala } from '../../../core/sala-layout';
 import { ComprobanteEntradaComponent } from '../../../shared/ui/comprobante-entrada/comprobante-entrada.component';
 
@@ -19,11 +23,19 @@ export interface ButacaComprada extends ButacaSeleccionada {
   esVip: boolean;
 }
 
+export interface ItemCandyComprado {
+  nombre: string;
+  cantidad: number;
+  precioUnitario: number;
+}
+
 export interface Comprobante {
   compraId: string;
   qrCode: string;
   butacas: ButacaComprada[];
+  candy: ItemCandyComprado[];
   total: number;
+  creditoUsado: number;
 }
 
 function claveButaca(fila: string, columna: number): string {
@@ -47,6 +59,8 @@ export class ButacasComponent {
   private readonly butacasService = inject(ButacasService);
   private readonly authService = inject(AuthService);
   private readonly cuponesService = inject(CuponesService);
+  private readonly recompensasService = inject(RecompensasService);
+  private readonly candyService = inject(CandyService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly layout = generarLayoutSala();
@@ -73,6 +87,13 @@ export class ButacasComponent {
   readonly codigoCupon = signal('');
   readonly errorCupon = signal<string | null>(null);
   readonly aplicandoCupon = signal(false);
+  readonly usarCredito = signal(false);
+  readonly recompensasDisponibles = signal<Recompensa[]>([]);
+  readonly canjeandoRecompensaId = signal<string | null>(null);
+  readonly errorCanje = signal<string | null>(null);
+  readonly categoriasCandy = signal<CategoriaCandy[]>([]);
+  readonly productosCandy = signal<ProductoCandy[]>([]);
+  readonly cantidadesCandy = signal<ReadonlyMap<string, number>>(new Map());
 
   readonly edadUsuario = computed<number | null>(() => {
     const fechaNacimiento = this.authService.perfil()?.fecha_nacimiento;
@@ -95,16 +116,54 @@ export class ButacasComponent {
     return !!restriccion && edad !== null && edad < restriccion;
   });
 
-  readonly puedeComprar = computed(() => !this.requiereLogin() && !this.bloqueadoPorEdad());
+  // Preventa (mail 08/03): precio especial desde 7 días antes del estreno
+  // hasta el día del estreno. La ventana se calcula EN VIVO a partir de
+  // pelicula.fecha_estreno en vez de leer funcion.fecha_apertura_preventa
+  // (que se guarda al crear la función): si un admin edita la fecha de
+  // estreno después desde Admin > Películas, esta cuenta siempre queda
+  // consistente con el valor actual — la columna guardada podría quedar
+  // desactualizada y no queremos depender de ella para decidir el precio.
+  private readonly ventanaPreventa = computed<{ apertura: Date; estreno: Date } | null>(() => {
+    const funcion = this.funcion();
+    const pelicula = this.pelicula();
+    if (!funcion?.es_preventa || funcion.precio_preventa == null || !pelicula?.fecha_estreno) {
+      return null;
+    }
+    const estreno = new Date(`${pelicula.fecha_estreno}T00:00:00`);
+    const apertura = new Date(estreno);
+    apertura.setDate(apertura.getDate() - 7);
+    return { apertura, estreno };
+  });
+
+  readonly fechaAperturaPreventa = computed(() => this.ventanaPreventa()?.apertura ?? null);
+
+  readonly enPreventa = computed(() => {
+    const ventana = this.ventanaPreventa();
+    if (!ventana) return false;
+    const ahora = new Date();
+    return ahora >= ventana.apertura && ahora < ventana.estreno;
+  });
+
+  // Antes de que abra la preventa, la venta está directamente cerrada — no
+  // "precio normal mientras tanto". Esto sí bloquea la compra por completo
+  // (a diferencia de después del estreno, donde simplemente se cobra el
+  // precio normal y la venta sigue abierta).
+  readonly ventaAunNoAbierta = computed(() => {
+    const ventana = this.ventanaPreventa();
+    return !!ventana && new Date() < ventana.apertura;
+  });
+
+  readonly puedeComprar = computed(() => !this.requiereLogin() && !this.bloqueadoPorEdad() && !this.ventaAunNoAbierta());
 
   readonly totalSeleccion = computed(() => {
     const funcion = this.funcion();
     if (!funcion) return 0;
 
+    const enPreventa = this.enPreventa();
     let total = 0;
     for (const clave of this.seleccionadas()) {
       const [fila] = clave.split('-');
-      total += esVip(fila) ? funcion.precio_vip : funcion.precio_base;
+      total += enPreventa ? funcion.precio_preventa! : esVip(fila) ? funcion.precio_vip : funcion.precio_base;
     }
     return total;
   });
@@ -119,6 +178,30 @@ export class ButacasComponent {
     if (!cupon) return subtotal;
     return Math.round(subtotal * (1 - cupon.porcentaje / 100) * 100) / 100;
   });
+
+  // Candy (mail 06/02: "que lo puedan comprar junto con la entrada") — el
+  // cupón de la entrada no se extiende al candy, así que se suma DESPUÉS
+  // del descuento de las butacas, no antes.
+  readonly carritoCandy = computed(() => {
+    const cantidades = this.cantidadesCandy();
+    return this.productosCandy()
+      .map((producto) => ({ producto, cantidad: cantidades.get(producto.id) ?? 0 }))
+      .filter((item) => item.cantidad > 0);
+  });
+
+  readonly totalCandy = computed(() => this.carritoCandy().reduce((acc, item) => acc + item.producto.precio * item.cantidad, 0));
+
+  readonly totalGeneral = computed(() => this.totalConDescuento() + this.totalCandy());
+
+  // Crédito disponible (mail 10/03: "debe poder usarse junto con otros
+  // métodos de pago"): se aplica sobre el total general (entradas + candy),
+  // nunca más de lo que realmente hay disponible ni más de lo que se está
+  // pagando.
+  readonly creditoDisponible = computed(() => this.authService.perfil()?.credito_disponible ?? 0);
+
+  readonly creditoAplicado = computed(() => (this.usarCredito() ? Math.min(this.creditoDisponible(), this.totalGeneral()) : 0));
+
+  readonly totalAPagar = computed(() => this.totalGeneral() - this.creditoAplicado());
 
   constructor() {
     const funcionId = this.route.snapshot.paramMap.get('funcionId');
@@ -189,9 +272,44 @@ export class ButacasComponent {
     }
   }
 
+  productosPorCategoria(categoriaId: string): ProductoCandy[] {
+    return this.productosCandy().filter((producto) => producto.categoria_id === categoriaId);
+  }
+
+  cambiarCantidadCandy(producto: ProductoCandy, delta: number): void {
+    const actuales = new Map(this.cantidadesCandy());
+    const nueva = Math.max(0, (actuales.get(producto.id) ?? 0) + delta);
+    if (nueva === 0) {
+      actuales.delete(producto.id);
+    } else {
+      actuales.set(producto.id, nueva);
+    }
+    this.cantidadesCandy.set(actuales);
+  }
+
   quitarCupon(): void {
     this.cuponAplicado.set(null);
     this.errorCupon.set(null);
+  }
+
+  // Canjear puntos pasa directo por acá (no por el perfil): así el canje
+  // tiene un destino inmediato — bajar el total de ESTA compra — en vez de
+  // acumular crédito suelto sin ningún propósito claro. Reusa el mismo
+  // RPC canjear_puntos (020) que ya suma crédito, y activa "usar crédito"
+  // automáticamente para aplicarlo al toque.
+  async canjearPuntos(recompensa: Recompensa): Promise<void> {
+    this.canjeandoRecompensaId.set(recompensa.id);
+    this.errorCanje.set(null);
+    try {
+      await this.recompensasService.canjear(recompensa.id);
+      await this.authService.recargarPerfil();
+      this.usarCredito.set(true);
+      await this.cargarRecompensasDisponibles();
+    } catch (error) {
+      this.errorCanje.set(error instanceof Error ? error.message : 'No pudimos canjear esta recompensa.');
+    } finally {
+      this.canjeandoRecompensaId.set(null);
+    }
   }
 
   async confirmarCompra(): Promise<void> {
@@ -206,8 +324,10 @@ export class ButacasComponent {
         return { fila, columna: Number(columnaTexto) };
       });
 
+      const carritoCandy = this.carritoCandy();
       const subtotal = this.totalSeleccion();
-      const total = this.totalConDescuento();
+      const total = this.totalGeneral();
+      const creditoUsado = this.creditoAplicado();
       const cupon = this.cuponAplicado();
       const resultado = await this.butacasService.confirmarCompra({
         funcionId: funcion.id,
@@ -215,16 +335,26 @@ export class ButacasComponent {
         usuarioId: this.authService.session()?.user.id ?? null,
         cuponId: cupon?.id ?? null,
         subtotal,
-        total
+        total,
+        creditoUsado,
+        candyItems: carritoCandy.map((item) => ({
+          productoId: item.producto.id,
+          cantidad: item.cantidad,
+          precioUnitario: item.producto.precio
+        }))
       });
 
       this.compraConfirmada.set({
         compraId: resultado.compraId,
         qrCode: resultado.qrCode,
         butacas: butacas.map((b) => ({ ...b, esVip: esVip(b.fila) })).sort((a, b) => a.fila.localeCompare(b.fila) || a.columna - b.columna),
-        total
+        candy: carritoCandy.map((item) => ({ nombre: item.producto.nombre, cantidad: item.cantidad, precioUnitario: item.producto.precio })),
+        total: total - creditoUsado,
+        creditoUsado
       });
       this.seleccionadas.set(new Set());
+      this.cantidadesCandy.set(new Map());
+      this.usarCredito.set(false);
 
       // Refresca los puntos de fidelidad que acaba de acreditar el trigger
       // de la compra, así el header/perfil los muestra al instante.
@@ -257,6 +387,10 @@ export class ButacasComponent {
       this.funcion.set(funcion);
       this.pelicula.set(await this.peliculasService.obtenerPorId(funcion.pelicula_id));
 
+      const [categorias, productos] = await Promise.all([this.candyService.listarCategorias(), this.candyService.listarProductosActivos()]);
+      this.categoriasCandy.set(categorias);
+      this.productosCandy.set(productos);
+
       // Sin esto, entrar directo a esta URL (F5, o un link) podía leer
       // session()=null aunque la persona estuviera logueada — la sesión
       // todavía no se había terminado de resolver — y el cupón de
@@ -266,6 +400,7 @@ export class ButacasComponent {
       const usuarioId = this.authService.session()?.user.id;
       if (usuarioId) {
         this.cuponAplicado.set(await this.cuponesService.buscarCuponBienvenida(usuarioId));
+        await this.cargarRecompensasDisponibles();
       }
 
       await this.recargarOcupadas(funcionId);
@@ -277,6 +412,15 @@ export class ButacasComponent {
     } finally {
       this.cargando.set(false);
     }
+  }
+
+  // Solo se muestran recompensas de tipo "entrada" que el usuario ya puede
+  // pagar con sus puntos actuales — el candy bar todavía no existe, así
+  // que las recompensas de tipo "producto_candy" no tienen dónde usarse acá.
+  private async cargarRecompensasDisponibles(): Promise<void> {
+    const puntos = this.authService.perfil()?.puntos_fidelidad ?? 0;
+    const todas = await this.recompensasService.listarActivas();
+    this.recompensasDisponibles.set(todas.filter((r) => r.tipo === 'entrada' && r.puntos_requeridos <= puntos));
   }
 
   private async recargarOcupadas(funcionId: string): Promise<void> {

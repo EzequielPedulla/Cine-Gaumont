@@ -1,4 +1,4 @@
-<a class="movie-card" [routerLink]="modo() === 'cartelera' ? ['/peliculas', pelicula().id, 'funciones'] : null">
+<a class="movie-card" [routerLink]="puedeVerFunciones() ? ['/peliculas', pelicula().id, 'funciones'] : null">
   <div class="movie-card__poster">
     @if (pelicula().imagen_url) {
       <img [src]="pelicula().imagen_url" [alt]="'Póster de ' + pelicula().titulo" loading="lazy" />
@@ -29,10 +29,31 @@
       {{ pelicula().duracion_min | duracion }}
     </p>
 
+    @if (modo() === 'proximamente' && precioPreventa() !== null) {
+      <p class="movie-card__preventa">
+        <i class="ph-fill ph-ticket"></i>
+        Preventa desde {{ precioPreventa() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}
+        @if (fechaAperturaPreventa(); as apertura) {
+          <span class="movie-card__preventa-fecha">
+            @if (ventaPreventaAbierta()) {
+              ya podés comprarla
+            } @else {
+              se abre el {{ apertura | date: "d 'de' MMMM" }}
+            }
+          </span>
+        }
+      </p>
+    }
+
     @if (modo() === 'proximamente') {
-      <button type="button" class="btn btn--outline movie-card__cta" (click)="avisarme.emit()">
-        <i class="ph ph-bell"></i>
-        Avisarme
+      <button
+        type="button"
+        class="btn btn--outline movie-card__cta"
+        [class.is-activo]="avisado()"
+        (click)="$event.preventDefault(); avisarme.emit()"
+      >
+        <i class="ph" [class.ph-bell]="!avisado()" [class.ph-bell-ringing]="avisado()"></i>
+        {{ avisado() ? 'Te vamos a avisar' : 'Avisarme' }}
       </button>
     }
   </div>

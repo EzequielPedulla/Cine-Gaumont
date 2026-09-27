@@ -69,6 +69,14 @@ export const routes: Routes = [
       {
         path: 'log',
         loadComponent: () => import('./features/admin/admin-log/admin-log.component').then((m) => m.AdminLogComponent)
+      },
+      {
+        path: 'recompensas',
+        loadComponent: () => import('./features/admin/admin-recompensas/admin-recompensas.component').then((m) => m.AdminRecompensasComponent)
+      },
+      {
+        path: 'candy',
+        loadComponent: () => import('./features/admin/admin-candy/admin-candy.component').then((m) => m.AdminCandyComponent)
       }
     ]
   },

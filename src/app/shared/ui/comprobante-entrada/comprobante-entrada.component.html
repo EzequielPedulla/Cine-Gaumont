@@ -22,6 +22,17 @@
     }
   </div>
 
+  @if (candy().length > 0) {
+    <ul class="comprobante__candy">
+      @for (item of candy(); track item.nombre) {
+        <li>{{ item.cantidad }}x {{ item.nombre }} · {{ item.precioUnitario * item.cantidad | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</li>
+      }
+    </ul>
+  }
+
+  @if (creditoUsado() > 0) {
+    <p class="comprobante__credito">Pagado con crédito: -{{ creditoUsado() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
+  }
   <p class="comprobante__total">Total pagado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
 
   <div class="comprobante__qr">

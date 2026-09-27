@@ -1,0 +1,14 @@
+<div class="selector-hora">
+  <select [formControl]="controlHora()" aria-label="Hora">
+    <option [ngValue]="null" disabled>Hora</option>
+    @for (h of horas; track h) {
+      <option [ngValue]="h">{{ h.toString().padStart(2, '0') }}</option>
+    }
+  </select>
+  <select [formControl]="controlMinuto()" aria-label="Minuto">
+    <option [ngValue]="null" disabled>Min.</option>
+    @for (m of minutos; track m) {
+      <option [ngValue]="m">{{ m.toString().padStart(2, '0') }}</option>
+    }
+  </select>
+</div>

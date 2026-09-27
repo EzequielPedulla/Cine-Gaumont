@@ -57,7 +57,8 @@
               [formato]="compra.funcion.formato"
               [idioma]="compra.funcion.idioma"
               [butacas]="butacasParaTicket(compra)"
-              [total]="compra.total"
+              [total]="compra.total - compra.credito_usado"
+              [creditoUsado]="compra.credito_usado"
               [qrCode]="compra.qr_code"
               [estado]="compra.estado === 'activa' ? 'Entrada válida' : compra.estado === 'cancelada' ? 'Cancelada' : 'Ya validada'"
             />

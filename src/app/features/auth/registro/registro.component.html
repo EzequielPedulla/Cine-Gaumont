@@ -22,26 +22,7 @@
 
     <div class="campo">
       <span class="campo__label">Fecha de nacimiento</span>
-      <div class="fecha-nacimiento">
-        <select formControlName="dia" aria-label="Día">
-          <option [ngValue]="null" disabled>Día</option>
-          @for (dia of dias; track dia) {
-            <option [ngValue]="dia">{{ dia }}</option>
-          }
-        </select>
-        <select formControlName="mes" aria-label="Mes">
-          <option [ngValue]="null" disabled>Mes</option>
-          @for (mes of meses; track mes.valor) {
-            <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
-          }
-        </select>
-        <select formControlName="anio" aria-label="Año">
-          <option [ngValue]="null" disabled>Año</option>
-          @for (anio of anios; track anio) {
-            <option [ngValue]="anio">{{ anio }}</option>
-          }
-        </select>
-      </div>
+      <app-selector-fecha [controlDia]="form.controls.dia" [controlMes]="form.controls.mes" [controlAnio]="form.controls.anio" [anios]="anios" />
       @if ((form.get('dia')?.touched || form.get('mes')?.touched || form.get('anio')?.touched) &&
         (form.get('dia')?.invalid || form.get('mes')?.invalid || form.get('anio')?.invalid)) {
         <span class="campo__error">Completá tu fecha de nacimiento.</span>

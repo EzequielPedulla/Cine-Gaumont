@@ -8,6 +8,12 @@ export interface ButacaComprobante {
   esVip?: boolean;
 }
 
+export interface CandyComprobante {
+  nombre: string;
+  cantidad: number;
+  precioUnitario: number;
+}
+
 // Ticket de entrada reutilizable: lo usa tanto la confirmación de compra
 // (butacas.component) como "Mis películas" (para volver a ver una entrada
 // ya comprada) — mismo aspecto en los dos lugares, un solo lugar para
@@ -25,7 +31,9 @@ export class ComprobanteEntradaComponent {
   readonly formato = input.required<string>();
   readonly idioma = input.required<string>();
   readonly butacas = input.required<ButacaComprobante[]>();
+  readonly candy = input<CandyComprobante[]>([]);
   readonly total = input.required<number>();
+  readonly creditoUsado = input(0);
   readonly qrCode = input.required<string>();
   readonly estado = input<string>('Entrada válida');
 

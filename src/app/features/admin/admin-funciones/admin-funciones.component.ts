@@ -6,10 +6,12 @@ import { PeliculasService } from '../../../core/services/peliculas.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { FuncionConDetalle } from '../../../core/models/funcion.model';
 import { PeliculaConGeneros } from '../../../core/models/pelicula.model';
+import { SelectorFechaComponent } from '../../../shared/ui/selector-fecha/selector-fecha.component';
+import { SelectorHoraComponent } from '../../../shared/ui/selector-hora/selector-hora.component';
 
 @Component({
   selector: 'app-admin-funciones',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, SelectorFechaComponent, SelectorHoraComponent],
   templateUrl: './admin-funciones.component.html',
   styleUrl: './admin-funciones.component.scss'
 })
@@ -39,29 +41,11 @@ export class AdminFuncionesComponent {
   readonly diasSemanaSeleccionados = signal<ReadonlySet<number>>(new Set());
 
   // Selectores propios de fecha/hora (mail 28/02: la consigna pide
-  // explícitamente evitar el input nativo del navegador) — mismo patrón de
-  // día/mes/año que ya usa registro.component.ts para la fecha de
-  // nacimiento. Los minutos van de a 15 porque nadie programa una función
-  // de cine a, por ejemplo, las 20:07.
-  readonly dias = Array.from({ length: 31 }, (_, i) => i + 1);
-  readonly meses = [
-    { valor: 1, nombre: 'Enero' },
-    { valor: 2, nombre: 'Febrero' },
-    { valor: 3, nombre: 'Marzo' },
-    { valor: 4, nombre: 'Abril' },
-    { valor: 5, nombre: 'Mayo' },
-    { valor: 6, nombre: 'Junio' },
-    { valor: 7, nombre: 'Julio' },
-    { valor: 8, nombre: 'Agosto' },
-    { valor: 9, nombre: 'Septiembre' },
-    { valor: 10, nombre: 'Octubre' },
-    { valor: 11, nombre: 'Noviembre' },
-    { valor: 12, nombre: 'Diciembre' }
-  ];
+  // explícitamente evitar el input nativo del navegador) — componentes
+  // compartidos (shared/ui/selector-fecha, selector-hora), mismos que usa
+  // registro.component.ts para la fecha de nacimiento.
   private readonly anioActual = new Date().getFullYear();
   readonly anios = [this.anioActual, this.anioActual + 1];
-  readonly horas = Array.from({ length: 24 }, (_, i) => i);
-  readonly minutos = [0, 15, 30, 45];
 
   readonly form = this.fb.nonNullable.group({
     peliculaId: ['', Validators.required],
@@ -74,6 +58,8 @@ export class AdminFuncionesComponent {
     idioma: ['castellano', Validators.required],
     precioBase: [3000, [Validators.required, Validators.min(0)]],
     precioVip: [4500, [Validators.required, Validators.min(0)]],
+    esPreventa: [false],
+    precioPreventa: [null as number | null],
     repetir: [false],
     fechaHastaDia: [null as number | null],
     fechaHastaMes: [null as number | null],
@@ -125,6 +111,24 @@ export class AdminFuncionesComponent {
       return;
     }
 
+    let fechaAperturaPreventa: string | null = null;
+    if (valores.esPreventa) {
+      if (!pelicula.fecha_estreno) {
+        this.error.set('Esta película no tiene fecha de estreno cargada — no se puede configurar la preventa.');
+        return;
+      }
+      if (!valores.precioPreventa || valores.precioPreventa <= 0) {
+        this.error.set('Ingresá un precio de preventa válido.');
+        return;
+      }
+      // "abrir la venta 7 días antes del estreno" (mail 08/03): la fecha de
+      // apertura es siempre estreno - 7 días, no algo que el admin elija a
+      // mano función por función.
+      const apertura = new Date(`${pelicula.fecha_estreno}T00:00:00`);
+      apertura.setDate(apertura.getDate() - 7);
+      fechaAperturaPreventa = apertura.toISOString();
+    }
+
     let fechas: string[];
     if (valores.repetir) {
       const fechaHasta = this.combinarFecha(valores.fechaHastaAnio, valores.fechaHastaMes, valores.fechaHastaDia);
@@ -158,7 +162,10 @@ export class AdminFuncionesComponent {
           formato: valores.formato as '2D' | '3D' | '4D' | '5D',
           idioma: valores.idioma as 'castellano' | 'subtitulada',
           precioBase: valores.precioBase,
-          precioVip: valores.precioVip
+          precioVip: valores.precioVip,
+          esPreventa: valores.esPreventa,
+          precioPreventa: valores.esPreventa ? valores.precioPreventa : null,
+          fechaAperturaPreventa
         });
         creadas.push(`${fecha} → ${sala.nombre}`);
       } catch (error) {
@@ -193,7 +200,9 @@ export class AdminFuncionesComponent {
         fechaHastaDia: null,
         fechaHastaMes: null,
         fechaHastaAnio: null,
-        repetir: false
+        repetir: false,
+        esPreventa: false,
+        precioPreventa: null
       });
       this.diasSemanaSeleccionados.set(new Set());
     }

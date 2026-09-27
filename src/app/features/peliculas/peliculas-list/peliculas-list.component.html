@@ -48,7 +48,13 @@
     <h2>Próximamente</h2>
     <div class="grid">
       @for (pelicula of proximamente(); track pelicula.id) {
-        <app-movie-card [pelicula]="pelicula" modo="proximamente" />
+        <app-movie-card
+          [pelicula]="pelicula"
+          modo="proximamente"
+          [avisado]="alertasActivas().has(pelicula.id)"
+          [precioPreventa]="preciosPreventa().get(pelicula.id) ?? null"
+          (avisarme)="toggleAvisarme(pelicula.id)"
+        />
       }
     </div>
   </section>

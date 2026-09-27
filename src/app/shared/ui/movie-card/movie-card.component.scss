@@ -75,8 +75,31 @@
   font-size: 0.85rem;
 }
 
+.movie-card__preventa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px var(--space-1);
+  margin: 0;
+  color: var(--color-accent-amber);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.movie-card__preventa-fecha {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
 .movie-card__cta {
   margin-top: var(--space-2);
   width: 100%;
   justify-content: center;
+
+  &.is-activo {
+    border-color: var(--color-accent-teal);
+    color: var(--color-accent-teal);
+  }
 }

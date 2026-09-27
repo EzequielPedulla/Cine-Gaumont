@@ -1,0 +1,112 @@
+<div class="admin-candy">
+  <h1>Candy bar</h1>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <section class="admin-candy__categorias">
+      <h2>Categorías</h2>
+      <div class="form-inline">
+        <label class="campo">
+          Nueva categoría
+          <input
+            type="text"
+            placeholder="Ej. Bebidas"
+            [value]="nombreCategoria()"
+            (input)="nombreCategoria.set($any($event.target).value)"
+            (keyup.enter)="crearCategoria()"
+          />
+        </label>
+        <button type="button" class="btn btn--primary" (click)="crearCategoria()">Agregar</button>
+      </div>
+
+      <div class="pills-categorias">
+        @for (categoria of categorias(); track categoria.id) {
+          <span class="pill">
+            {{ categoria.nombre }}
+            <button type="button" class="pill__quitar" (click)="eliminarCategoria(categoria)" aria-label="Eliminar categoría">×</button>
+          </span>
+        } @empty {
+          <p class="estado">Todavía no hay categorías.</p>
+        }
+      </div>
+    </section>
+
+    <header class="admin-candy__header">
+      <h2>Productos</h2>
+      <button type="button" class="btn btn--primary" [disabled]="categorias().length === 0" (click)="nuevoProducto()">+ Nuevo producto</button>
+    </header>
+    @if (categorias().length === 0) {
+      <p class="estado">Creá al menos una categoría antes de cargar productos.</p>
+    }
+
+    @if (mostrarFormulario()) {
+      <form class="form-producto" [formGroup]="form" (ngSubmit)="guardarProducto()">
+        <label class="campo">
+          Categoría
+          <select formControlName="categoria_id">
+            @for (categoria of categorias(); track categoria.id) {
+              <option [value]="categoria.id">{{ categoria.nombre }}</option>
+            }
+          </select>
+        </label>
+        <label class="campo">
+          Nombre
+          <input type="text" formControlName="nombre" />
+        </label>
+        <label class="campo">
+          Precio
+          <input type="number" formControlName="precio" min="0" />
+        </label>
+        <label class="campo">
+          URL de imagen (opcional)
+          <input type="text" formControlName="imagen_url" placeholder="https://..." />
+        </label>
+        <label class="campo campo--checkbox">
+          <input type="checkbox" formControlName="activo" />
+          Visible para comprar
+        </label>
+        <div class="form-producto__acciones">
+          <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Categoría</th>
+          <th>Precio</th>
+          <th>Visible</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (producto of productos(); track producto.id) {
+          <tr>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.categoria?.nombre ?? '—' }}</td>
+            <td>{{ producto.precio | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+            <td>{{ producto.activo ? 'Sí' : 'No' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="editarProducto(producto)">Editar</button>
+              <button type="button" class="btn btn--ghost" (click)="eliminarProducto(producto)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="estado">Todavía no hay productos cargados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -25,26 +25,7 @@
 
     <div class="campo">
       <span class="campo__label">{{ form.value.repetir ? 'Desde' : 'Fecha' }}</span>
-      <div class="selector-fecha">
-        <select formControlName="fechaDia" aria-label="Día">
-          <option [ngValue]="null" disabled>Día</option>
-          @for (dia of dias; track dia) {
-            <option [ngValue]="dia">{{ dia }}</option>
-          }
-        </select>
-        <select formControlName="fechaMes" aria-label="Mes">
-          <option [ngValue]="null" disabled>Mes</option>
-          @for (mes of meses; track mes.valor) {
-            <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
-          }
-        </select>
-        <select formControlName="fechaAnio" aria-label="Año">
-          <option [ngValue]="null" disabled>Año</option>
-          @for (anio of anios; track anio) {
-            <option [ngValue]="anio">{{ anio }}</option>
-          }
-        </select>
-      </div>
+      <app-selector-fecha [controlDia]="form.controls.fechaDia" [controlMes]="form.controls.fechaMes" [controlAnio]="form.controls.fechaAnio" [anios]="anios" />
       @if ((form.get('fechaDia')?.touched || form.get('fechaMes')?.touched || form.get('fechaAnio')?.touched) &&
         (form.get('fechaDia')?.invalid || form.get('fechaMes')?.invalid || form.get('fechaAnio')?.invalid)) {
         <span class="campo__error">Completá día, mes y año.</span>
@@ -53,20 +34,7 @@
 
     <div class="campo">
       <span class="campo__label">Hora</span>
-      <div class="selector-hora">
-        <select formControlName="horaH" aria-label="Hora">
-          <option [ngValue]="null" disabled>Hora</option>
-          @for (h of horas; track h) {
-            <option [ngValue]="h">{{ h.toString().padStart(2, '0') }}</option>
-          }
-        </select>
-        <select formControlName="horaM" aria-label="Minuto">
-          <option [ngValue]="null" disabled>Min.</option>
-          @for (m of minutos; track m) {
-            <option [ngValue]="m">{{ m.toString().padStart(2, '0') }}</option>
-          }
-        </select>
-      </div>
+      <app-selector-hora [controlHora]="form.controls.horaH" [controlMinuto]="form.controls.horaM" />
       @if ((form.get('horaH')?.touched || form.get('horaM')?.touched) && (form.get('horaH')?.invalid || form.get('horaM')?.invalid)) {
         <span class="campo__error">Elegí un horario.</span>
       }
@@ -97,26 +65,12 @@
 
         <div class="campo">
           <span class="campo__label">Hasta</span>
-          <div class="selector-fecha">
-            <select formControlName="fechaHastaDia" aria-label="Día hasta">
-              <option [ngValue]="null" disabled>Día</option>
-              @for (dia of dias; track dia) {
-                <option [ngValue]="dia">{{ dia }}</option>
-              }
-            </select>
-            <select formControlName="fechaHastaMes" aria-label="Mes hasta">
-              <option [ngValue]="null" disabled>Mes</option>
-              @for (mes of meses; track mes.valor) {
-                <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
-              }
-            </select>
-            <select formControlName="fechaHastaAnio" aria-label="Año hasta">
-              <option [ngValue]="null" disabled>Año</option>
-              @for (anio of anios; track anio) {
-                <option [ngValue]="anio">{{ anio }}</option>
-              }
-            </select>
-          </div>
+          <app-selector-fecha
+            [controlDia]="form.controls.fechaHastaDia"
+            [controlMes]="form.controls.fechaHastaMes"
+            [controlAnio]="form.controls.fechaHastaAnio"
+            [anios]="anios"
+          />
         </div>
       </div>
     }
@@ -156,6 +110,24 @@
         }
       </label>
     </div>
+
+    <label class="campo campo--checkbox">
+      <input type="checkbox" formControlName="esPreventa" />
+      Es preventa (precio especial hasta el estreno)
+    </label>
+
+    @if (form.value.esPreventa) {
+      <div class="repetir-box">
+        <label class="campo">
+          Precio de preventa (para cualquier butaca)
+          <input type="number" formControlName="precioPreventa" min="0" />
+        </label>
+        <p class="ayuda">
+          Se abre automáticamente 7 días antes del estreno de la película elegida, y vuelve al precio normal el día del
+          estreno.
+        </p>
+      </div>
+    }
 
     <button type="submit" class="btn btn--primary" [disabled]="guardando()">
       {{ guardando() ? 'Asignando sala...' : 'Crear función' }}

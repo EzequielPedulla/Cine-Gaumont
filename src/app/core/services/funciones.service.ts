@@ -11,6 +11,9 @@ export interface DatosNuevaFuncion {
   idioma: Idioma;
   precioBase: number;
   precioVip: number;
+  esPreventa?: boolean;
+  precioPreventa?: number | null;
+  fechaAperturaPreventa?: string | null; // ISO — se calcula como fecha_estreno - 7 días
 }
 
 @Injectable({ providedIn: 'root' })
@@ -68,7 +71,10 @@ export class FuncionesService {
       p_formato: datos.formato,
       p_idioma: datos.idioma,
       p_precio_base: datos.precioBase,
-      p_precio_vip: datos.precioVip
+      p_precio_vip: datos.precioVip,
+      p_es_preventa: datos.esPreventa ?? false,
+      p_precio_preventa: datos.precioPreventa ?? null,
+      p_fecha_apertura_preventa: datos.fechaAperturaPreventa ?? null
     });
 
     if (error) throw new Error(error.message || 'No pudimos crear la función.');
@@ -86,5 +92,34 @@ export class FuncionesService {
   async eliminar(id: string): Promise<void> {
     const { error } = await this.supabase.client.from('funciones').delete().eq('id', id);
     if (error) throw new Error('No se pudo eliminar: probablemente ya tenga entradas vendidas.');
+  }
+
+  // Para mostrar "Preventa desde $X" en la tarjeta de "Próximamente" — si
+  // una película tiene más de una función en preventa con precios
+  // distintos, se muestra el más bajo.
+  async listarPreciosPreventaPorPelicula(peliculaIds: string[]): Promise<Map<string, number>> {
+    if (peliculaIds.length === 0) return new Map();
+
+    const { data, error } = await this.supabase.client
+      .from('funciones')
+      .select('pelicula_id, precio_preventa')
+      .in('pelicula_id', peliculaIds)
+      .eq('es_preventa', true)
+      .not('precio_preventa', 'is', null)
+      .returns<{ pelicula_id: string; precio_preventa: number }[]>();
+
+    if (error) {
+      console.error('Error al leer precios de preventa:', error);
+      return new Map();
+    }
+
+    const mapa = new Map<string, number>();
+    for (const fila of data) {
+      const actual = mapa.get(fila.pelicula_id);
+      if (actual === undefined || fila.precio_preventa < actual) {
+        mapa.set(fila.pelicula_id, fila.precio_preventa);
+      }
+    }
+    return mapa;
   }
 }

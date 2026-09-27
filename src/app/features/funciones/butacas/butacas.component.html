@@ -17,7 +17,9 @@
           [formato]="funcion.formato"
           [idioma]="funcion.idioma"
           [butacas]="compra.butacas"
+          [candy]="compra.candy"
           [total]="compra.total"
+          [creditoUsado]="compra.creditoUsado"
           [qrCode]="compra.qrCode"
         />
       }
@@ -42,7 +44,12 @@
       </p>
     </header>
 
-    @if (requiereLogin()) {
+    @if (ventaAunNoAbierta()) {
+      <p class="aviso aviso--bloqueo">
+        La venta de entradas para esta función todavía no está abierta — arranca el
+        {{ fechaAperturaPreventa() | date: "d 'de' MMMM" }} (preventa, 7 días antes del estreno).
+      </p>
+    } @else if (requiereLogin()) {
       <p class="aviso aviso--bloqueo">
         Esta película tiene restricción de edad (+{{ pelicula()?.clasificacion_edad }}). Iniciá sesión para poder comprar.
       </p>
@@ -54,6 +61,12 @@
 
     @if (avisoSeleccion()) {
       <p class="aviso aviso--warning">{{ avisoSeleccion() }}</p>
+    }
+
+    @if (enPreventa()) {
+      <p class="aviso aviso--cupon">
+        🎟️ Precio de preventa: {{ funcion.precio_preventa | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }} por butaca.
+      </p>
     }
 
     <div class="pantalla">PANTALLA</div>
@@ -91,13 +104,81 @@
       <span class="leyenda__item"><i class="butaca butaca--accesible"></i> Accesible</span>
     </div>
 
+    @if (productosCandy().length > 0) {
+      <section class="candy">
+        <h2>Candy bar</h2>
+        <p class="candy__ayuda">Sumá tu candy a esta compra — lo retirás con el mismo QR de la entrada.</p>
+
+        @for (categoria of categoriasCandy(); track categoria.id) {
+          @if (productosPorCategoria(categoria.id); as productosDeCategoria) {
+            @if (productosDeCategoria.length > 0) {
+              <h3 class="candy__categoria">{{ categoria.nombre }}</h3>
+              <div class="candy__grid">
+                @for (producto of productosDeCategoria; track producto.id) {
+                  <div class="candy__item">
+                    @if (producto.imagen_url) {
+                      <img [src]="producto.imagen_url" [alt]="producto.nombre" class="candy__imagen" />
+                    }
+                    <div class="candy__info">
+                      <span class="candy__nombre">{{ producto.nombre }}</span>
+                      <span class="candy__precio">{{ producto.precio | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+                    </div>
+                    <div class="candy__stepper">
+                      <button type="button" (click)="cambiarCantidadCandy(producto, -1)" [disabled]="(cantidadesCandy().get(producto.id) ?? 0) === 0">
+                        -
+                      </button>
+                      <span>{{ cantidadesCandy().get(producto.id) ?? 0 }}</span>
+                      <button type="button" (click)="cambiarCantidadCandy(producto, 1)">+</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+        }
+
+        @if (totalCandy() > 0) {
+          <p class="candy__subtotal">Subtotal candy: {{ totalCandy() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
+        }
+      </section>
+    }
+
     <footer class="resumen">
       <div class="resumen__info">
         <strong>{{ seleccionadas().size }}</strong> butaca(s) seleccionada(s)
         @if (cuponAplicado()) {
           <span class="resumen__subtotal-tachado">{{ totalSeleccion() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
         }
-        <span class="resumen__total">{{ totalConDescuento() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        @if (creditoAplicado() > 0) {
+          <span class="resumen__subtotal-tachado">{{ totalConDescuento() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        }
+        <span class="resumen__total">{{ totalAPagar() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+
+        @if (creditoDisponible() > 0) {
+          <label class="resumen__credito">
+            <input type="checkbox" [checked]="usarCredito()" (change)="usarCredito.set($any($event.target).checked)" />
+            Usar mi crédito disponible ({{ creditoDisponible() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }})
+          </label>
+        }
+
+        @if (recompensasDisponibles().length > 0) {
+          <div class="resumen__recompensas">
+            @if (errorCanje()) {
+              <p class="resumen__cupon-error">{{ errorCanje() }}</p>
+            }
+            @for (recompensa of recompensasDisponibles(); track recompensa.id) {
+              <button
+                type="button"
+                class="resumen__canje-btn"
+                [disabled]="canjeandoRecompensaId() === recompensa.id"
+                (click)="canjearPuntos(recompensa)"
+              >
+                <i class="ph-fill ph-star"></i>
+                {{ canjeandoRecompensaId() === recompensa.id ? 'Canjeando...' : 'Canjear ' + recompensa.puntos_requeridos + ' pts por ' + recompensa.nombre }}
+              </button>
+            }
+          </div>
+        }
 
         @if (cuponAplicado(); as cupon) {
           <p class="resumen__cupon-aplicado">

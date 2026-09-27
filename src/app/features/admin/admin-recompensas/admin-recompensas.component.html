@@ -1,0 +1,80 @@
+<div class="admin-recompensas">
+  <header class="admin-recompensas__header">
+    <h1>Recompensas</h1>
+    <button type="button" class="btn btn--primary" (click)="nuevaRecompensa()">+ Nueva recompensa</button>
+  </header>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <form class="form-inline" [formGroup]="form" (ngSubmit)="guardar()">
+      <label class="campo">
+        Nombre
+        <input type="text" formControlName="nombre" placeholder="Entrada gratis" />
+      </label>
+      <label class="campo">
+        Tipo
+        <select formControlName="tipo">
+          <option value="entrada">Entrada</option>
+          <option value="producto_candy">Producto de candy</option>
+        </select>
+      </label>
+      <label class="campo">
+        Puntos requeridos
+        <input type="number" formControlName="puntos_requeridos" min="1" />
+      </label>
+      <label class="campo">
+        Valor en crédito ($)
+        <input type="number" formControlName="valor" min="0" />
+      </label>
+      <label class="campo campo--checkbox">
+        <input type="checkbox" formControlName="activo" />
+        Activa
+      </label>
+      <div class="tabla__acciones">
+        <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Puntos</th>
+          <th>Valor</th>
+          <th>Activa</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (recompensa of recompensas(); track recompensa.id) {
+          <tr>
+            <td>{{ recompensa.nombre }}</td>
+            <td>{{ recompensa.tipo === 'entrada' ? 'Entrada' : 'Candy' }}</td>
+            <td>{{ recompensa.puntos_requeridos }} pts</td>
+            <td>{{ recompensa.valor | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+            <td>{{ recompensa.activo ? 'Sí' : 'No' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="editar(recompensa)">Editar</button>
+              <button type="button" class="btn btn--ghost" (click)="eliminar(recompensa)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="estado">Todavía no hay recompensas cargadas.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
