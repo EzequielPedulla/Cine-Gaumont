@@ -18,6 +18,7 @@
           [idioma]="funcion.idioma"
           [butacas]="compra.butacas"
           [candy]="compra.candy"
+          [clasificacionEdad]="pelicula()?.clasificacion_edad ?? null"
           [total]="compra.total"
           [creditoUsado]="compra.creditoUsado"
           [qrCode]="compra.qrCode"
@@ -43,6 +44,13 @@
         {{ funcion.fecha_hora | date: "EEEE d 'de' MMMM, HH:mm" }} · {{ funcion.sala.nombre }} · {{ funcion.formato }}
       </p>
     </header>
+
+    @if (!enPreventa()) {
+      <p class="precios-info">
+        Butaca común: <strong>{{ funcion.precio_base | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+        · Butaca VIP: <strong>{{ funcion.precio_vip | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</strong>
+      </p>
+    }
 
     @if (ventaAunNoAbierta()) {
       <p class="aviso aviso--bloqueo">
@@ -104,6 +112,32 @@
       <span class="leyenda__item"><i class="butaca butaca--accesible"></i> Accesible</span>
     </div>
 
+    @if (combos().length > 0) {
+      <section class="combos-destacados">
+        <h2>🔥 Combos</h2>
+        <div class="combos-destacados__grid">
+          @for (combo of combos(); track combo.id) {
+            <div class="combo-card">
+              <span class="combo-card__nombre">{{ combo.nombre }}</span>
+              <span class="combo-card__incluye">
+                @for (item of combo.items; track item.producto_id) {
+                  {{ item.cantidad }}x {{ item.producto?.nombre }}@if (!$last) {, }
+                }
+              </span>
+              <span class="combo-card__precio">{{ combo.precio_fijo | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+              <div class="candy__stepper">
+                <button type="button" (click)="cambiarCantidadCombo(combo, -1)" [disabled]="(cantidadesCombo().get(combo.id) ?? 0) === 0">
+                  -
+                </button>
+                <span>{{ cantidadesCombo().get(combo.id) ?? 0 }}</span>
+                <button type="button" (click)="cambiarCantidadCombo(combo, 1)">+</button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
     @if (productosCandy().length > 0) {
       <section class="candy">
         <h2>Candy bar</h2>
@@ -130,6 +164,12 @@
                       <span>{{ cantidadesCandy().get(producto.id) ?? 0 }}</span>
                       <button type="button" (click)="cambiarCantidadCandy(producto, 1)">+</button>
                     </div>
+                    @if (recompensaCandyPorProducto().get(producto.id); as recompensa) {
+                      <button type="button" class="candy__canje-btn" (click)="canjearProductoCandy(producto, recompensa)">
+                        <i class="ph-fill ph-star"></i>
+                        Canjear con {{ recompensa.puntos_requeridos }} pts
+                      </button>
+                    }
                   </div>
                 }
               </div>
@@ -139,6 +179,9 @@
 
         @if (totalCandy() > 0) {
           <p class="candy__subtotal">Subtotal candy: {{ totalCandy() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
+        }
+        @if (totalCombos() > 0) {
+          <p class="candy__subtotal">Subtotal combos: {{ totalCombos() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
         }
       </section>
     }
@@ -157,24 +200,28 @@
         @if (creditoDisponible() > 0) {
           <label class="resumen__credito">
             <input type="checkbox" [checked]="usarCredito()" (change)="usarCredito.set($any($event.target).checked)" />
-            Usar mi crédito disponible ({{ creditoDisponible() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }})
+            Usar mi crédito disponible ({{ creditoDisponible() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}) — solo cubre entradas
           </label>
         }
 
-        @if (recompensasDisponibles().length > 0) {
-          <div class="resumen__recompensas">
-            @if (errorCanje()) {
-              <p class="resumen__cupon-error">{{ errorCanje() }}</p>
-            }
-            @for (recompensa of recompensasDisponibles(); track recompensa.id) {
-              <button
-                type="button"
-                class="resumen__canje-btn"
-                [disabled]="canjeandoRecompensaId() === recompensa.id"
-                (click)="canjearPuntos(recompensa)"
-              >
+        @if (canjesPendientes().length > 0) {
+          <ul class="resumen__canjes-pendientes">
+            @for (canje of canjesPendientes(); track $index) {
+              <li>
                 <i class="ph-fill ph-star"></i>
-                {{ canjeandoRecompensaId() === recompensa.id ? 'Canjeando...' : 'Canjear ' + recompensa.puntos_requeridos + ' pts por ' + recompensa.nombre }}
+                {{ canje.producto ? canje.producto.nombre : canje.recompensa.nombre }} (-{{ canje.recompensa.puntos_requeridos }} pts)
+                <button type="button" class="link-quitar" (click)="quitarCanje($index)">Quitar</button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (recompensasEntradaCanjeables().length > 0) {
+          <div class="resumen__recompensas">
+            @for (recompensa of recompensasEntradaCanjeables(); track recompensa.id) {
+              <button type="button" class="resumen__canje-btn" (click)="canjearEntrada(recompensa)">
+                <i class="ph-fill ph-star"></i>
+                Canjear {{ recompensa.puntos_requeridos }} pts por {{ recompensa.nombre }}
               </button>
             }
           </div>

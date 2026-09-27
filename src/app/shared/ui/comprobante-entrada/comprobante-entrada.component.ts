@@ -32,6 +32,7 @@ export class ComprobanteEntradaComponent {
   readonly idioma = input.required<string>();
   readonly butacas = input.required<ButacaComprobante[]>();
   readonly candy = input<CandyComprobante[]>([]);
+  readonly clasificacionEdad = input<13 | 18 | null>(null);
   readonly total = input.required<number>();
   readonly creditoUsado = input(0);
   readonly qrCode = input.required<string>();

@@ -1,13 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RecompensasService, RecompensaFormData } from '../../../core/services/recompensas.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-import { Recompensa, TipoRecompensa } from '../../../core/models/recompensa.model';
+import { Recompensa } from '../../../core/models/recompensa.model';
 
 @Component({
   selector: 'app-admin-recompensas',
-  imports: [ReactiveFormsModule, CurrencyPipe],
+  imports: [ReactiveFormsModule],
   templateUrl: './admin-recompensas.component.html',
   styleUrl: './admin-recompensas.component.scss'
 })
@@ -24,11 +23,14 @@ export class AdminRecompensasComponent {
   readonly mostrarFormulario = signal(false);
   readonly recompensaEditando = signal<Recompensa | null>(null);
 
+  // Esta pantalla solo maneja recompensas de tipo "entrada" (una config
+  // global, mail 03/03: "entrada = 500 pts") — las de candy ahora se cargan
+  // directo en cada producto desde Admin > Candy. No tiene un "valor en
+  // crédito" propio: al canjear, cubre el precio de UNA butaca común de la
+  // función que se esté comprando (butacas.component lo calcula en vivo).
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
-    tipo: ['entrada' as TipoRecompensa, Validators.required],
     puntos_requeridos: [500, [Validators.required, Validators.min(1)]],
-    valor: [0, [Validators.required, Validators.min(0)]],
     activo: [true]
   });
 
@@ -40,7 +42,7 @@ export class AdminRecompensasComponent {
     this.cargando.set(true);
     this.error.set(null);
     try {
-      this.recompensas.set(await this.recompensasService.listarTodas());
+      this.recompensas.set((await this.recompensasService.listarTodas()).filter((r) => r.tipo === 'entrada'));
     } catch {
       this.error.set('No pudimos cargar las recompensas.');
     } finally {
@@ -50,7 +52,7 @@ export class AdminRecompensasComponent {
 
   nuevaRecompensa(): void {
     this.recompensaEditando.set(null);
-    this.form.reset({ nombre: '', tipo: 'entrada', puntos_requeridos: 500, valor: 0, activo: true });
+    this.form.reset({ nombre: '', puntos_requeridos: 500, activo: true });
     this.mostrarFormulario.set(true);
   }
 
@@ -58,9 +60,7 @@ export class AdminRecompensasComponent {
     this.recompensaEditando.set(recompensa);
     this.form.reset({
       nombre: recompensa.nombre,
-      tipo: recompensa.tipo,
       puntos_requeridos: recompensa.puntos_requeridos,
-      valor: recompensa.valor,
       activo: recompensa.activo
     });
     this.mostrarFormulario.set(true);
@@ -76,7 +76,7 @@ export class AdminRecompensasComponent {
       return;
     }
 
-    const datos: RecompensaFormData = this.form.getRawValue();
+    const datos: RecompensaFormData = { ...this.form.getRawValue(), tipo: 'entrada' };
 
     this.guardando.set(true);
     this.error.set(null);

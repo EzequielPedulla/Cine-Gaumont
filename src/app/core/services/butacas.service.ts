@@ -8,7 +8,8 @@ export interface ButacaSeleccionada {
 }
 
 export interface CandySeleccionado {
-  productoId: string;
+  productoId: string | null;
+  comboId: string | null;
   cantidad: number;
   precioUnitario: number;
 }
@@ -22,6 +23,7 @@ export interface DatosCompra {
   total: number;
   creditoUsado: number;
   candyItems: CandySeleccionado[];
+  canjes: string[]; // ids de recompensas_puntos canjeadas en esta compra
 }
 
 export interface CompraConfirmada {
@@ -56,11 +58,14 @@ export class ButacasService {
   async confirmarCompra(datos: DatosCompra): Promise<CompraConfirmada> {
     const qrCode = crypto.randomUUID();
 
-    // 1 punto de fidelidad por cada peso gastado, solo si hay usuario
-    // registrado (no en compras anónimas). El trigger `acreditar_puntos_compra`
-    // (docs/migraciones/012) es el que realmente suma esto a
-    // usuarios_perfil.puntos_fidelidad al insertarse la compra.
-    const puntosGanados = datos.usuarioId ? Math.floor(datos.total) : 0;
+    // 1 punto de fidelidad por cada peso REALMENTE pagado (total menos el
+    // crédito usado), solo si hay usuario registrado. El trigger
+    // `acreditar_puntos_compra` (docs/migraciones/012, corregido en 028) es
+    // el que realmente suma esto a usuarios_perfil.puntos_fidelidad al
+    // insertarse la compra — y lo recalcula él mismo del lado del servidor,
+    // así que este valor es solo para que la fila no quede en 0 hasta que
+    // el trigger corra.
+    const puntosGanados = datos.usuarioId ? Math.floor(Math.max(datos.total - datos.creditoUsado, 0)) : 0;
 
     const { data: compra, error: errorCompra } = await this.supabase.client
       .from('compras')
@@ -108,6 +113,7 @@ export class ButacasService {
         datos.candyItems.map((item) => ({
           compra_id: compra.id,
           producto_id: item.productoId,
+          combo_id: item.comboId,
           cantidad: item.cantidad,
           precio_unitario: item.precioUnitario
         }))
@@ -121,6 +127,24 @@ export class ButacasService {
         console.error('Error al insertar candy en la compra:', errorCandy);
         await this.supabase.client.from('compras').delete().eq('id', compra.id);
         throw new Error('No pudimos agregar el candy a tu compra. Probá de nuevo.');
+      }
+    }
+
+    // Cada canje resta puntos y queda registrado contra ESTA compra (docs/
+    // migraciones/027) — nunca toca credito_disponible, ese campo es solo
+    // el que devuelve cancelar_compra. Si algún canje falla (ej. alguien
+    // gastó los puntos desde otra pestaña justo antes), se revierte todo
+    // igual que con butacas/candy: no queremos una compra a mitad de pagar.
+    for (const recompensaId of datos.canjes) {
+      const { error: errorCanje } = await this.supabase.client.rpc('canjear_puntos_en_compra', {
+        p_recompensa_id: recompensaId,
+        p_compra_id: compra.id
+      });
+
+      if (errorCanje) {
+        console.error('Error al aplicar canje de puntos:', errorCanje);
+        await this.supabase.client.from('compras').delete().eq('id', compra.id);
+        throw new Error(errorCanje.message || 'No pudimos aplicar el canje de puntos. Probá de nuevo.');
       }
     }
 

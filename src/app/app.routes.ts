@@ -77,6 +77,10 @@ export const routes: Routes = [
       {
         path: 'candy',
         loadComponent: () => import('./features/admin/admin-candy/admin-candy.component').then((m) => m.AdminCandyComponent)
+      },
+      {
+        path: 'combos',
+        loadComponent: () => import('./features/admin/admin-combos/admin-combos.component').then((m) => m.AdminCombosComponent)
       }
     ]
   },

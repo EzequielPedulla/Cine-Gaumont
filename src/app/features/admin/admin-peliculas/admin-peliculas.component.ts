@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PeliculasService, PeliculaFormData } from '../../../core/services/peliculas.service';
 import { GenerosService } from '../../../core/services/generos.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { AlmacenamientoService } from '../../../core/services/almacenamiento.service';
 import { Genero, PeliculaConGeneros } from '../../../core/models/pelicula.model';
 import { DuracionPipe } from '../../../shared/pipes/duracion.pipe';
 
@@ -17,12 +18,14 @@ export class AdminPeliculasComponent {
   private readonly peliculasService = inject(PeliculasService);
   private readonly generosService = inject(GenerosService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly almacenamientoService = inject(AlmacenamientoService);
 
   readonly peliculas = signal<PeliculaConGeneros[]>([]);
   readonly generosDisponibles = signal<Genero[]>([]);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly guardando = signal(false);
+  readonly subiendoImagen = signal(false);
 
   readonly mostrarFormulario = signal(false);
   readonly peliculaEditando = signal<PeliculaConGeneros | null>(null);
@@ -80,6 +83,22 @@ export class AdminPeliculasComponent {
 
   cancelar(): void {
     this.mostrarFormulario.set(false);
+  }
+
+  async onArchivoSeleccionado(event: Event): Promise<void> {
+    const archivo = (event.target as HTMLInputElement).files?.[0];
+    if (!archivo) return;
+
+    this.subiendoImagen.set(true);
+    this.error.set(null);
+    try {
+      const url = await this.almacenamientoService.subirImagen(archivo, 'peliculas');
+      this.form.patchValue({ imagen_url: url });
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'No pudimos subir la imagen.');
+    } finally {
+      this.subiendoImagen.set(false);
+    }
   }
 
   toggleGenero(id: string): void {

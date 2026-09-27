@@ -51,9 +51,10 @@ export class CandyService {
     return data;
   }
 
-  async crear(datos: ProductoCandyFormData): Promise<void> {
-    const { error } = await this.supabase.client.from('productos_candy').insert(datos);
+  async crear(datos: ProductoCandyFormData): Promise<ProductoCandy> {
+    const { data, error } = await this.supabase.client.from('productos_candy').insert(datos).select().single<ProductoCandy>();
     if (error) throw new Error('No pudimos crear el producto.');
+    return data;
   }
 
   async actualizar(id: string, datos: ProductoCandyFormData): Promise<void> {

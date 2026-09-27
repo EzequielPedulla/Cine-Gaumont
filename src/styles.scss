@@ -121,13 +121,22 @@ img {
   color: var(--color-bg);
 }
 
-/* Comprobante de compra (butacas.component): al imprimir/"Guardar como PDF",
-   ocultamos todo el marco del sitio y dejamos solo el ticket. */
+/* Comprobante de compra e "Imprimir/Exportar a PDF" de reportes: al
+   imprimir/"Guardar como PDF", ocultamos todo el marco del sitio (header,
+   footer, nav del admin) y dejamos solo el contenido — el ticket en un
+   caso, la tabla del reporte en el otro. .no-imprimir tapa además los
+   botones/controles que no tienen sentido en un PDF (ej. "Exportar"). */
 @media print {
   app-header,
   app-footer,
-  app-confirm-dialog {
+  app-confirm-dialog,
+  .admin__nav,
+  .no-imprimir {
     display: none !important;
+  }
+
+  .reportes__titulo-impresion {
+    display: block !important;
   }
 
   body {

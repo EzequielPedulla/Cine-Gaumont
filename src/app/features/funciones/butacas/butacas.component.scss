@@ -5,6 +5,15 @@
   padding: var(--space-6) var(--space-4) var(--space-12);
 }
 
+// El resumen queda "flotando" pegado abajo (sticky) mientras se scrollea el
+// candy bar, así el total y el botón de confirmar siempre están a mano sin
+// bajar hasta el final — pero necesita este colchón de aire abajo de todo,
+// si no el resumen queda tapando las últimas filas de candy en vez de
+// flotar arriba de espacio vacío.
+.butacas-page {
+  padding-bottom: 200px;
+}
+
 .estado {
   color: var(--color-text-muted);
   text-align: center;
@@ -23,6 +32,17 @@
 .butacas-header__meta {
   color: var(--color-text-muted);
   text-transform: capitalize;
+}
+
+.precios-info {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: var(--space-4);
+
+  strong {
+    color: var(--color-text);
+  }
 }
 
 .aviso {
@@ -73,6 +93,23 @@
 
   i {
     font-size: 0.85rem;
+  }
+}
+
+.resumen__canjes-pendientes {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: var(--color-accent-amber);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 }
 
@@ -252,6 +289,45 @@
   }
 }
 
+.combos-destacados {
+  margin: var(--space-6) 0;
+  padding: var(--space-4);
+  background: linear-gradient(135deg, rgba(255, 179, 71, 0.14), rgba(255, 179, 71, 0.03));
+  border: 1px solid var(--color-accent-amber);
+  border-radius: var(--radius-md);
+}
+
+.combos-destacados__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.combo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent-amber);
+  border-radius: var(--radius-sm);
+}
+
+.combo-card__nombre {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.combo-card__incluye {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.combo-card__precio {
+  font-weight: 700;
+  color: var(--color-accent-amber);
+}
+
 .candy {
   margin: var(--space-6) 0;
   padding: var(--space-4);
@@ -343,6 +419,25 @@
   }
 }
 
+.candy__canje-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-accent-amber);
+  background: transparent;
+  color: var(--color-accent-amber);
+  font-size: 0.72rem;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 .candy__subtotal {
   margin: var(--space-4) 0 0;
   text-align: right;
@@ -352,7 +447,8 @@
 
 .resumen {
   position: sticky;
-  bottom: 0;
+  bottom: var(--space-4);
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -362,6 +458,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .resumen__info {

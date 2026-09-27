@@ -1,5 +1,23 @@
 @use '../../../shared/styles/admin' as *;
 
+.reportes__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.reportes__acciones {
+  display: flex;
+  gap: var(--space-2);
+}
+
+// Solo se ve al imprimir (ver @media print en styles.scss): un título
+// simple para el PDF, sin el botón de exportar ni el resto del header.
+.reportes__titulo-impresion {
+  display: none;
+}
+
 .reportes__tarjetas {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -24,4 +42,89 @@
 .tarjeta__label {
   color: var(--color-text-muted);
   font-size: 0.8rem;
+}
+
+.grafico,
+.candy-mas-vendido {
+  margin-top: var(--space-8);
+}
+
+.grafico__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.grafico__rango {
+  display: flex;
+  gap: var(--space-2);
+
+  button {
+    padding: 4px var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &.is-active {
+      background: var(--color-accent-amber);
+      color: var(--color-bg);
+      border-color: var(--color-accent-amber);
+    }
+  }
+}
+
+.grafico__barras {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.grafico__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 160px) 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 0.85rem;
+}
+
+.grafico__etiqueta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.grafico__barra-fondo {
+  height: 18px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.grafico__barra {
+  height: 100%;
+  background: var(--color-accent-amber);
+  border-radius: var(--radius-sm);
+}
+
+.grafico__cantidad {
+  color: var(--color-text-muted);
+  min-width: 2ch;
+  text-align: right;
+}
+
+.candy-mas-vendido__lista {
+  padding-left: var(--space-5);
+  color: var(--color-text);
+  font-size: 0.9rem;
+
+  li {
+    margin-bottom: 4px;
+  }
 }

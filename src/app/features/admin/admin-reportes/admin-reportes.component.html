@@ -1,5 +1,12 @@
 <section class="reportes">
-  <h1>Reportes</h1>
+  <header class="reportes__header no-imprimir">
+    <h1>Reportes</h1>
+    <div class="reportes__acciones">
+      <button type="button" class="btn btn--ghost" (click)="exportarExcel()">Exportar a Excel</button>
+      <button type="button" class="btn btn--ghost" (click)="exportarPDF()">Exportar a PDF</button>
+    </div>
+  </header>
+  <h1 class="reportes__titulo-impresion">Reportes — Cine Gaumont</h1>
 
   @if (cargando()) {
     <p class="estado">Cargando reporte...</p>
@@ -37,5 +44,44 @@
         }
       </tbody>
     </table>
+
+    <section class="grafico">
+      <div class="grafico__header no-imprimir">
+        <h2>Películas más vistas</h2>
+        <div class="grafico__rango">
+          <button type="button" [class.is-active]="rango() === 'semana'" (click)="cambiarRango('semana')">Última semana</button>
+          <button type="button" [class.is-active]="rango() === 'mes'" (click)="cambiarRango('mes')">Último mes</button>
+        </div>
+      </div>
+
+      @if (ventasPeliculaFiltradas().length === 0) {
+        <p class="estado">No hubo entradas vendidas en este período.</p>
+      } @else {
+        <div class="grafico__barras">
+          @for (barra of ventasPeliculaFiltradas(); track barra.titulo) {
+            <div class="grafico__fila">
+              <span class="grafico__etiqueta">{{ barra.titulo }}</span>
+              <div class="grafico__barra-fondo">
+                <div class="grafico__barra" [style.width.%]="barra.porcentaje"></div>
+              </div>
+              <span class="grafico__cantidad">{{ barra.entradas }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="candy-mas-vendido">
+      <h2>Candy más vendido</h2>
+      @if (candyMasVendido().length === 0) {
+        <p class="estado">Todavía no se vendió candy.</p>
+      } @else {
+        <ol class="candy-mas-vendido__lista">
+          @for (item of candyMasVendido(); track item.producto_id) {
+            <li>{{ item.nombre }} — {{ item.unidades_vendidas }} unidades</li>
+          }
+        </ol>
+      }
+    </section>
   }
 </section>

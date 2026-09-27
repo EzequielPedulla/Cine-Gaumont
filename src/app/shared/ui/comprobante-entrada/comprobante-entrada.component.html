@@ -22,6 +22,12 @@
     }
   </div>
 
+  @if (clasificacionEdad()) {
+    <p class="comprobante__restriccion">
+      Película +{{ clasificacionEdad() }}: los menores deben ir acompañados de un adulto.
+    </p>
+  }
+
   @if (candy().length > 0) {
     <ul class="comprobante__candy">
       @for (item of candy(); track item.nombre) {

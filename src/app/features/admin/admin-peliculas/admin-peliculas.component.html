@@ -47,9 +47,20 @@
       </div>
 
       <div class="campo-fila">
-        <label class="campo">
-          URL de imagen (póster)
-          <input type="text" formControlName="imagen_url" placeholder="https://..." />
+        <label class="campo campo--imagen">
+          Póster
+          <div class="subida-imagen">
+            @if (form.controls.imagen_url.value) {
+              <img [src]="form.controls.imagen_url.value" alt="Vista previa del póster" class="subida-imagen__preview" />
+            }
+            <div class="subida-imagen__controles">
+              <input type="text" formControlName="imagen_url" placeholder="https://... (o subí un archivo)" />
+              <label class="btn btn--ghost btn--file">
+                {{ subiendoImagen() ? 'Subiendo...' : 'Subir imagen' }}
+                <input type="file" accept="image/*" [disabled]="subiendoImagen()" (change)="onArchivoSeleccionado($event)" hidden />
+              </label>
+            </div>
+          </div>
         </label>
         <label class="campo">
           Fecha de estreno

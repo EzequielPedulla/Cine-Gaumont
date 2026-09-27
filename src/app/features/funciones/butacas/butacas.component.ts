@@ -10,12 +10,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CuponesService } from '../../../core/services/cupones.service';
 import { RecompensasService } from '../../../core/services/recompensas.service';
 import { CandyService } from '../../../core/services/candy.service';
+import { CombosService } from '../../../core/services/combos.service';
 import { FuncionConSala } from '../../../core/models/funcion.model';
 import { PeliculaConGeneros } from '../../../core/models/pelicula.model';
 import { ReservaButaca } from '../../../core/models/compra.model';
 import { Cupon } from '../../../core/models/cupon.model';
 import { Recompensa } from '../../../core/models/recompensa.model';
 import { CategoriaCandy, ProductoCandy } from '../../../core/models/candy.model';
+import { ComboConItems } from '../../../core/models/combo.model';
 import { Butaca, generarLayoutSala } from '../../../core/sala-layout';
 import { ComprobanteEntradaComponent } from '../../../shared/ui/comprobante-entrada/comprobante-entrada.component';
 
@@ -36,6 +38,15 @@ export interface Comprobante {
   candy: ItemCandyComprado[];
   total: number;
   creditoUsado: number;
+}
+
+// Un canje "pendiente" no toca la base todavía — recién se aplica (resta
+// puntos de verdad) cuando se confirma la compra, todo junto y atómico.
+// `producto` distingue el tipo: null = recompensa de entrada, con producto
+// = recompensa de candy (y ese producto se suma gratis al carrito).
+export interface CanjePendiente {
+  recompensa: Recompensa;
+  producto: ProductoCandy | null;
 }
 
 function claveButaca(fila: string, columna: number): string {
@@ -61,6 +72,7 @@ export class ButacasComponent {
   private readonly cuponesService = inject(CuponesService);
   private readonly recompensasService = inject(RecompensasService);
   private readonly candyService = inject(CandyService);
+  private readonly combosService = inject(CombosService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly layout = generarLayoutSala();
@@ -88,12 +100,13 @@ export class ButacasComponent {
   readonly errorCupon = signal<string | null>(null);
   readonly aplicandoCupon = signal(false);
   readonly usarCredito = signal(false);
-  readonly recompensasDisponibles = signal<Recompensa[]>([]);
-  readonly canjeandoRecompensaId = signal<string | null>(null);
-  readonly errorCanje = signal<string | null>(null);
+  readonly recompensasActivas = signal<Recompensa[]>([]);
+  readonly canjesPendientes = signal<CanjePendiente[]>([]);
   readonly categoriasCandy = signal<CategoriaCandy[]>([]);
   readonly productosCandy = signal<ProductoCandy[]>([]);
   readonly cantidadesCandy = signal<ReadonlyMap<string, number>>(new Map());
+  readonly combos = signal<ComboConItems[]>([]);
+  readonly cantidadesCombo = signal<ReadonlyMap<string, number>>(new Map());
 
   readonly edadUsuario = computed<number | null>(() => {
     const fechaNacimiento = this.authService.perfil()?.fecha_nacimiento;
@@ -191,15 +204,87 @@ export class ButacasComponent {
 
   readonly totalCandy = computed(() => this.carritoCandy().reduce((acc, item) => acc + item.producto.precio * item.cantidad, 0));
 
-  readonly totalGeneral = computed(() => this.totalConDescuento() + this.totalCandy());
+  // Combos (mail 08/03: "a precio fijo... destacados en la pantalla de
+  // compra") — no se descomponen en sus productos individuales al comprar:
+  // cada combo elegido es UNA fila propia (compra_candy_items.combo_id),
+  // al precio fijo que definió el admin, sin importar la suma de sus partes.
+  readonly carritoCombos = computed(() => {
+    const cantidades = this.cantidadesCombo();
+    return this.combos()
+      .map((combo) => ({ combo, cantidad: cantidades.get(combo.id) ?? 0 }))
+      .filter((item) => item.cantidad > 0);
+  });
 
-  // Crédito disponible (mail 10/03: "debe poder usarse junto con otros
-  // métodos de pago"): se aplica sobre el total general (entradas + candy),
-  // nunca más de lo que realmente hay disponible ni más de lo que se está
-  // pagando.
+  readonly totalCombos = computed(() => this.carritoCombos().reduce((acc, item) => acc + item.combo.precio_fijo * item.cantidad, 0));
+
+  // Puntos gastados en canjes que todavía no se confirmaron — se descuentan
+  // de los puntos "disponibles para gastar" así no se puede armar un
+  // carrito de canjes que en total superen lo que la persona realmente tiene.
+  readonly puntosComprometidos = computed(() => this.canjesPendientes().reduce((acc, c) => acc + c.recompensa.puntos_requeridos, 0));
+
+  readonly puntosRestantes = computed(() => (this.authService.perfil()?.puntos_fidelidad ?? 0) - this.puntosComprometidos());
+
+  // Las recompensas de "entrada" no son de ningún producto puntual, así que
+  // se listan aparte, en el resumen. Las de candy sí son de un producto
+  // real (producto_id) — se muestran directo en su tarjeta.
+  //
+  // Solo se puede canjear una entrada si hay una butaca seleccionada para
+  // "cubrir" — sin esto se podía canjear puntos sin haber elegido ningún
+  // asiento todavía, sin relación con nada concreto. Y no se puede canjear
+  // más entradas de las butacas elegidas: cada canje cubre UNA butaca, no
+  // más (si no, se gastarían puntos de más sin ningún descuento extra real).
+  readonly entradasCanjeadasPendientes = computed(() => this.canjesPendientes().filter((c) => c.producto === null).length);
+
+  readonly recompensasEntradaCanjeables = computed(() => {
+    if (this.entradasCanjeadasPendientes() >= this.seleccionadas().size) return [];
+    return this.recompensasActivas().filter((r) => r.tipo === 'entrada' && r.puntos_requeridos <= this.puntosRestantes());
+  });
+
+  // Mismo criterio que con la entrada: solo se puede canjear un producto de
+  // candy si ya tenés al menos 1 unidad puesta en el carrito con el +/- de
+  // ese producto — canjear CONVIERTE una unidad paga en gratis (ver
+  // canjearProductoCandy), no agrega una unidad extra de la nada.
+  readonly recompensaCandyPorProducto = computed(() => {
+    const mapa = new Map<string, Recompensa>();
+    const cantidades = this.cantidadesCandy();
+    for (const r of this.recompensasActivas()) {
+      if (r.tipo === 'producto_candy' && r.producto_id && r.puntos_requeridos <= this.puntosRestantes() && (cantidades.get(r.producto_id) ?? 0) > 0) {
+        mapa.set(r.producto_id, r);
+      }
+    }
+    return mapa;
+  });
+
+  // Cada canje de candy pendiente entra gratis a esta lista aparte — nunca
+  // se mezcla con carritoCandy (que es lo que se paga con plata de verdad),
+  // para no tener que representar "3 pagas + 1 gratis del mismo producto"
+  // dentro de un solo contador.
+  readonly candyCanjeado = computed(() => this.canjesPendientes().filter((c) => c.producto !== null));
+
+  // Una recompensa de "entrada" no tiene un precio propio fijado por el
+  // admin — vale lo mismo que UNA butaca común de esta función, así nunca
+  // queda desactualizada respecto al precio real que se está cobrando.
+  readonly descuentoEntradaPorPuntos = computed(() => {
+    const funcion = this.funcion();
+    if (!funcion) return 0;
+    const cantidad = this.canjesPendientes().filter((c) => c.producto === null).length;
+    return Math.min(cantidad * funcion.precio_base, this.totalConDescuento());
+  });
+
+  readonly totalGeneral = computed(
+    () => Math.max(0, this.totalConDescuento() - this.descuentoEntradaPorPuntos()) + this.totalCandy() + this.totalCombos()
+  );
+
+  // Crédito disponible (mail 10/03): sale ÚNICAMENTE de cancelar una compra
+  // (docs/migraciones/014) — nunca del canje de puntos. Por eso mismo solo
+  // se aplica sobre las entradas, no sobre el candy: es plata que ya
+  // pagaste por una entrada antes, tiene sentido que vuelva a pagar
+  // entradas, no que se cuele a pagar pochoclos.
   readonly creditoDisponible = computed(() => this.authService.perfil()?.credito_disponible ?? 0);
 
-  readonly creditoAplicado = computed(() => (this.usarCredito() ? Math.min(this.creditoDisponible(), this.totalGeneral()) : 0));
+  readonly creditoAplicado = computed(() =>
+    this.usarCredito() ? Math.min(this.creditoDisponible(), Math.max(0, this.totalConDescuento() - this.descuentoEntradaPorPuntos())) : 0
+  );
 
   readonly totalAPagar = computed(() => this.totalGeneral() - this.creditoAplicado());
 
@@ -230,6 +315,21 @@ export class ButacasComponent {
       actuales.add(clave);
     }
     this.seleccionadas.set(actuales);
+    this.recortarCanjesDeEntradaA(actuales.size);
+  }
+
+  // Si se destilda una butaca y ya no hay suficientes para "cubrir" todos
+  // los canjes de entrada pendientes, se sacan los que sobran — nunca se
+  // deja un canje de puntos sin ninguna butaca real detrás.
+  private recortarCanjesDeEntradaA(cantidadButacas: number): void {
+    let entradasVistas = 0;
+    this.canjesPendientes.update((actuales) =>
+      actuales.filter((c) => {
+        if (c.producto !== null) return true;
+        entradasVistas++;
+        return entradasVistas <= cantidadButacas;
+      })
+    );
   }
 
   async aplicarCupon(): Promise<void> {
@@ -287,28 +387,47 @@ export class ButacasComponent {
     this.cantidadesCandy.set(actuales);
   }
 
+  cambiarCantidadCombo(combo: ComboConItems, delta: number): void {
+    const actuales = new Map(this.cantidadesCombo());
+    const nueva = Math.max(0, (actuales.get(combo.id) ?? 0) + delta);
+    if (nueva === 0) {
+      actuales.delete(combo.id);
+    } else {
+      actuales.set(combo.id, nueva);
+    }
+    this.cantidadesCombo.set(actuales);
+  }
+
   quitarCupon(): void {
     this.cuponAplicado.set(null);
     this.errorCupon.set(null);
   }
 
-  // Canjear puntos pasa directo por acá (no por el perfil): así el canje
-  // tiene un destino inmediato — bajar el total de ESTA compra — en vez de
-  // acumular crédito suelto sin ningún propósito claro. Reusa el mismo
-  // RPC canjear_puntos (020) que ya suma crédito, y activa "usar crédito"
-  // automáticamente para aplicarlo al toque.
-  async canjearPuntos(recompensa: Recompensa): Promise<void> {
-    this.canjeandoRecompensaId.set(recompensa.id);
-    this.errorCanje.set(null);
-    try {
-      await this.recompensasService.canjear(recompensa.id);
-      await this.authService.recargarPerfil();
-      this.usarCredito.set(true);
-      await this.cargarRecompensasDisponibles();
-    } catch (error) {
-      this.errorCanje.set(error instanceof Error ? error.message : 'No pudimos canjear esta recompensa.');
-    } finally {
-      this.canjeandoRecompensaId.set(null);
+  // Canjear no toca la base todavía — solo agrega el canje a la lista de
+  // "pendientes" de esta compra. Los puntos recién se restan de verdad (vía
+  // canjear_puntos_en_compra, docs/migraciones/027) cuando se confirma la
+  // compra, todo en la misma operación atómica que crea la entrada. Así, si
+  // la persona se arrepiente o nunca confirma, no perdió puntos por nada.
+  canjearEntrada(recompensa: Recompensa): void {
+    this.canjesPendientes.update((actuales) => [...actuales, { recompensa, producto: null }]);
+  }
+
+  // Convierte una unidad que ya estaba en el carrito (pagada) en una unidad
+  // gratis por puntos — por eso resta 1 del contador +/- del producto antes
+  // de sumarlo a los canjes pendientes: si no, quedaría duplicado (una vez
+  // cobrada, otra vez gratis).
+  canjearProductoCandy(producto: ProductoCandy, recompensa: Recompensa): void {
+    this.cambiarCantidadCandy(producto, -1);
+    this.canjesPendientes.update((actuales) => [...actuales, { recompensa, producto }]);
+  }
+
+  quitarCanje(index: number): void {
+    const canje = this.canjesPendientes()[index];
+    this.canjesPendientes.update((actuales) => actuales.filter((_, i) => i !== index));
+    if (canje?.producto) {
+      // Al sacar el canje, la unidad vuelve a estar disponible como paga —
+      // no desaparece del carrito, solo deja de ser gratis.
+      this.cambiarCantidadCandy(canje.producto, 1);
     }
   }
 
@@ -325,10 +444,23 @@ export class ButacasComponent {
       });
 
       const carritoCandy = this.carritoCandy();
+      const carritoCombos = this.carritoCombos();
       const subtotal = this.totalSeleccion();
       const total = this.totalGeneral();
       const creditoUsado = this.creditoAplicado();
       const cupon = this.cuponAplicado();
+
+      // El candy canjeado con puntos se agrupa por producto (si se canjeó
+      // el mismo 2 veces, una sola fila con cantidad 2) y va a precio $0 —
+      // ya "pagó" con puntos, no con plata.
+      const candyCanjeadoPorProducto = new Map<string, { producto: ProductoCandy; cantidad: number }>();
+      for (const canje of this.candyCanjeado()) {
+        const producto = canje.producto!;
+        const actual = candyCanjeadoPorProducto.get(producto.id);
+        candyCanjeadoPorProducto.set(producto.id, { producto, cantidad: (actual?.cantidad ?? 0) + 1 });
+      }
+      const candyGratis = [...candyCanjeadoPorProducto.values()];
+
       const resultado = await this.butacasService.confirmarCompra({
         funcionId: funcion.id,
         butacas,
@@ -337,28 +469,47 @@ export class ButacasComponent {
         subtotal,
         total,
         creditoUsado,
-        candyItems: carritoCandy.map((item) => ({
-          productoId: item.producto.id,
-          cantidad: item.cantidad,
-          precioUnitario: item.producto.precio
-        }))
+        candyItems: [
+          ...carritoCandy.map((item) => ({
+            productoId: item.producto.id,
+            comboId: null,
+            cantidad: item.cantidad,
+            precioUnitario: item.producto.precio
+          })),
+          ...candyGratis.map((item) => ({ productoId: item.producto.id, comboId: null, cantidad: item.cantidad, precioUnitario: 0 })),
+          ...carritoCombos.map((item) => ({
+            productoId: null,
+            comboId: item.combo.id,
+            cantidad: item.cantidad,
+            precioUnitario: item.combo.precio_fijo
+          }))
+        ],
+        canjes: this.canjesPendientes().map((c) => c.recompensa.id)
       });
 
       this.compraConfirmada.set({
         compraId: resultado.compraId,
         qrCode: resultado.qrCode,
         butacas: butacas.map((b) => ({ ...b, esVip: esVip(b.fila) })).sort((a, b) => a.fila.localeCompare(b.fila) || a.columna - b.columna),
-        candy: carritoCandy.map((item) => ({ nombre: item.producto.nombre, cantidad: item.cantidad, precioUnitario: item.producto.precio })),
+        candy: [
+          ...carritoCandy.map((item) => ({ nombre: item.producto.nombre, cantidad: item.cantidad, precioUnitario: item.producto.precio })),
+          ...candyGratis.map((item) => ({ nombre: item.producto.nombre + ' (canjeado con puntos)', cantidad: item.cantidad, precioUnitario: 0 })),
+          ...carritoCombos.map((item) => ({ nombre: item.combo.nombre, cantidad: item.cantidad, precioUnitario: item.combo.precio_fijo }))
+        ],
         total: total - creditoUsado,
         creditoUsado
       });
       this.seleccionadas.set(new Set());
       this.cantidadesCandy.set(new Map());
+      this.cantidadesCombo.set(new Map());
+      this.canjesPendientes.set([]);
       this.usarCredito.set(false);
 
       // Refresca los puntos de fidelidad que acaba de acreditar el trigger
-      // de la compra, así el header/perfil los muestra al instante.
+      // de la compra (y los que acaban de descontar los canjes), así el
+      // header/perfil lo muestra al instante.
       await this.authService.recargarPerfil();
+      await this.cargarRecompensasActivas();
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No pudimos completar la compra.');
       await this.recargarOcupadas(funcion.id);
@@ -387,9 +538,14 @@ export class ButacasComponent {
       this.funcion.set(funcion);
       this.pelicula.set(await this.peliculasService.obtenerPorId(funcion.pelicula_id));
 
-      const [categorias, productos] = await Promise.all([this.candyService.listarCategorias(), this.candyService.listarProductosActivos()]);
+      const [categorias, productos, combos] = await Promise.all([
+        this.candyService.listarCategorias(),
+        this.candyService.listarProductosActivos(),
+        this.combosService.listarActivos()
+      ]);
       this.categoriasCandy.set(categorias);
       this.productosCandy.set(productos);
+      this.combos.set(combos);
 
       // Sin esto, entrar directo a esta URL (F5, o un link) podía leer
       // session()=null aunque la persona estuviera logueada — la sesión
@@ -400,7 +556,7 @@ export class ButacasComponent {
       const usuarioId = this.authService.session()?.user.id;
       if (usuarioId) {
         this.cuponAplicado.set(await this.cuponesService.buscarCuponBienvenida(usuarioId));
-        await this.cargarRecompensasDisponibles();
+        await this.cargarRecompensasActivas();
       }
 
       await this.recargarOcupadas(funcionId);
@@ -414,13 +570,12 @@ export class ButacasComponent {
     }
   }
 
-  // Solo se muestran recompensas de tipo "entrada" que el usuario ya puede
-  // pagar con sus puntos actuales — el candy bar todavía no existe, así
-  // que las recompensas de tipo "producto_candy" no tienen dónde usarse acá.
-  private async cargarRecompensasDisponibles(): Promise<void> {
-    const puntos = this.authService.perfil()?.puntos_fidelidad ?? 0;
-    const todas = await this.recompensasService.listarActivas();
-    this.recompensasDisponibles.set(todas.filter((r) => r.tipo === 'entrada' && r.puntos_requeridos <= puntos));
+  // Se guardan TODAS las recompensas activas, sin filtrar por puntos acá —
+  // el filtro por "cuántos puntos me quedan" es reactivo (recompensasEntradaCanjeables
+  // / recompensaCandyPorProducto), porque baja en vivo a medida que se
+  // arman canjes pendientes, sin volver a pedirle nada a la base.
+  private async cargarRecompensasActivas(): Promise<void> {
+    this.recompensasActivas.set(await this.recompensasService.listarActivas());
   }
 
   private async recargarOcupadas(funcionId: string): Promise<void> {
@@ -441,6 +596,7 @@ export class ButacasComponent {
     }
     if (seLeTomaronAlguna) {
       this.seleccionadas.set(seleccionActual);
+      this.recortarCanjesDeEntradaA(seleccionActual.size);
       this.avisoSeleccion.set('Alguien tomó una de las butacas que habías elegido — la sacamos de tu selección.');
     }
   }

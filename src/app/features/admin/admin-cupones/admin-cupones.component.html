@@ -9,28 +9,48 @@
   }
 
   @if (mostrarFormulario()) {
-    <form class="form-inline" [formGroup]="form" (ngSubmit)="guardar()">
-      <label class="campo">
-        Código
-        <input type="text" formControlName="codigo" placeholder="BIENVENIDA20" />
-      </label>
-      <label class="campo">
-        Porcentaje
-        <input type="number" formControlName="porcentaje" min="1" max="100" />
-      </label>
+    <form class="form-cupon" [formGroup]="form" (ngSubmit)="guardar()">
+      <h2>{{ cuponEditando() ? 'Editar cupón' : 'Nuevo cupón' }}</h2>
+
+      <div class="campo-fila">
+        <label class="campo">
+          Código
+          <input type="text" formControlName="codigo" placeholder="Ej. BIENVENIDA20" />
+          @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+            <span class="campo__error">El código es obligatorio.</span>
+          }
+        </label>
+        <label class="campo">
+          Porcentaje de descuento
+          <input type="number" formControlName="porcentaje" min="1" max="100" />
+          @if (form.controls.porcentaje.invalid && form.controls.porcentaje.touched) {
+            <span class="campo__error">Ingresá un porcentaje entre 1 y 100.</span>
+          }
+        </label>
+      </div>
+
       <label class="campo">
         Se aplica a
         <select formControlName="condicion">
           <option value="primera_compra">Primera compra del usuario</option>
           <option value="mayor_50">Usuarios mayores de 50 años</option>
-          <option value="ninguna">Ninguna (cupón manual)</option>
+          <option value="ninguna">Ninguna condición (cupón manual, código libre)</option>
         </select>
+        <span class="campo__ayuda">
+          @switch (form.controls.condicion.value) {
+            @case ('primera_compra') { Se aplica solo si el usuario nunca compró antes. }
+            @case ('mayor_50') { Se aplica solo si el usuario tiene 50 años o más. }
+            @default { Sin condición: cualquiera que tenga el código lo puede usar. }
+          }
+        </span>
       </label>
+
       <label class="campo campo--checkbox">
         <input type="checkbox" formControlName="activo" />
-        Activo
+        Activo (visible y utilizable ya mismo)
       </label>
-      <div class="tabla__acciones">
+
+      <div class="form-cupon__acciones">
         <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
         <button type="submit" class="btn btn--primary" [disabled]="guardando()">
           {{ guardando() ? 'Guardando...' : 'Guardar' }}

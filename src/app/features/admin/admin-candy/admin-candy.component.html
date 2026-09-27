@@ -63,8 +63,27 @@
           <input type="number" formControlName="precio" min="0" />
         </label>
         <label class="campo">
-          URL de imagen (opcional)
-          <input type="text" formControlName="imagen_url" placeholder="https://..." />
+          Puntos para canjear (opcional)
+          <input type="number" formControlName="puntosCanje" min="1" placeholder="Ej. 150" />
+          @if (form.controls.puntosCanje.invalid && form.controls.puntosCanje.touched) {
+            <span class="campo__error">Tiene que ser mayor a 0.</span>
+          }
+          <span class="campo__ayuda">Si lo completás, aparece para canjear con puntos al comprar (acredita el precio actual como crédito).</span>
+        </label>
+        <label class="campo campo--imagen">
+          Foto (opcional)
+          <div class="subida-imagen">
+            @if (form.controls.imagen_url.value) {
+              <img [src]="form.controls.imagen_url.value" alt="Vista previa del producto" class="subida-imagen__preview" />
+            }
+            <div class="subida-imagen__controles">
+              <input type="text" formControlName="imagen_url" placeholder="https://... (o subí un archivo)" />
+              <label class="btn btn--ghost btn--file">
+                {{ subiendoImagen() ? 'Subiendo...' : 'Subir imagen' }}
+                <input type="file" accept="image/*" [disabled]="subiendoImagen()" (change)="onArchivoSeleccionado($event)" hidden />
+              </label>
+            </div>
+          </div>
         </label>
         <label class="campo campo--checkbox">
           <input type="checkbox" formControlName="activo" />

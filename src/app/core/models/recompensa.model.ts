@@ -6,7 +6,6 @@ export interface Recompensa {
   tipo: TipoRecompensa;
   producto_id: string | null;
   puntos_requeridos: number;
-  valor: number;
   activo: boolean;
 }
 

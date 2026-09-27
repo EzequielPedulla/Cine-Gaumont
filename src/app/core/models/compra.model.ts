@@ -33,7 +33,7 @@ export interface CompraConDetalle extends Compra {
     formato: string;
     idioma: string;
     sala: { nombre: string };
-    pelicula: { titulo: string; imagen_url: string | null };
+    pelicula: { titulo: string; imagen_url: string | null; clasificacion_edad: 13 | 18 | null };
   };
   reservas_butacas: { fila: string; columna: number }[];
 }

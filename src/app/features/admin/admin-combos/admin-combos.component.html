@@ -1,0 +1,107 @@
+<div class="admin-combos">
+  <header class="admin-combos__header">
+    <h1>Combos</h1>
+    <button type="button" class="btn btn--primary" [disabled]="productos().length === 0" (click)="nuevoCombo()">+ Nuevo combo</button>
+  </header>
+
+  @if (productos().length === 0) {
+    <p class="estado">Necesitás al menos un producto de candy activo (Admin &gt; Candy) antes de armar un combo.</p>
+  }
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <form class="form-combo" [formGroup]="form" (ngSubmit)="guardar()">
+      <h2>{{ comboEditando() ? 'Editar combo' : 'Nuevo combo' }}</h2>
+
+      <label class="campo">
+        Nombre
+        <input type="text" formControlName="nombre" placeholder="Ej. Combo Pareja" />
+        @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+          <span class="campo__error">El nombre es obligatorio.</span>
+        }
+      </label>
+
+      <label class="campo">
+        Precio fijo
+        <input type="number" formControlName="precio_fijo" min="0" />
+        @if (form.controls.precio_fijo.invalid && form.controls.precio_fijo.touched) {
+          <span class="campo__error">Ingresá un precio válido.</span>
+        }
+      </label>
+
+      <div class="campo">
+        <span class="campo__label">Productos incluidos</span>
+        <div class="combo-productos">
+          @for (producto of productos(); track producto.id) {
+            <div class="combo-producto">
+              <label class="combo-producto__check">
+                <input type="checkbox" [checked]="cantidadesPorProducto().has(producto.id)" (change)="toggleProducto(producto.id)" />
+                {{ producto.nombre }}
+              </label>
+              @if (cantidadesPorProducto().has(producto.id)) {
+                <div class="combo-producto__stepper">
+                  <button type="button" (click)="cambiarCantidad(producto.id, -1)">-</button>
+                  <span>{{ cantidadesPorProducto().get(producto.id) }}</span>
+                  <button type="button" (click)="cambiarCantidad(producto.id, 1)">+</button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <label class="campo campo--checkbox">
+        <input type="checkbox" formControlName="activo" />
+        Visible en la pantalla de compra
+      </label>
+
+      <div class="form-combo__acciones">
+        <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Combo</th>
+          <th>Incluye</th>
+          <th>Precio</th>
+          <th>Visible</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (combo of combos(); track combo.id) {
+          <tr>
+            <td>{{ combo.nombre }}</td>
+            <td>
+              @for (item of combo.items; track item.producto_id) {
+                <span class="pill">{{ item.cantidad }}x {{ item.producto?.nombre }}</span>
+              }
+            </td>
+            <td>{{ combo.precio_fijo | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+            <td>{{ combo.activo ? 'Sí' : 'No' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="editar(combo)">Editar</button>
+              <button type="button" class="btn btn--ghost" (click)="eliminar(combo)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="estado">Todavía no hay combos cargados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

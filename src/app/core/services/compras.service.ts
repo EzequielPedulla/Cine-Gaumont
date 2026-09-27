@@ -10,7 +10,7 @@ export class ComprasService {
     const { data, error } = await this.supabase.client
       .from('compras')
       .select(
-        '*, funcion:funciones(fecha_hora, formato, idioma, sala:salas(nombre), pelicula:peliculas(titulo, imagen_url)), reservas_butacas(fila, columna)'
+        '*, funcion:funciones(fecha_hora, formato, idioma, sala:salas(nombre), pelicula:peliculas(titulo, imagen_url, clasificacion_edad)), reservas_butacas(fila, columna)'
       )
       .eq('usuario_id', usuarioId)
       .order('creada_en', { ascending: false })

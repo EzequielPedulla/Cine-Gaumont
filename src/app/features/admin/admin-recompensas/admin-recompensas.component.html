@@ -1,39 +1,45 @@
 <div class="admin-recompensas">
   <header class="admin-recompensas__header">
-    <h1>Recompensas</h1>
+    <h1>Recompensas de entrada</h1>
     <button type="button" class="btn btn--primary" (click)="nuevaRecompensa()">+ Nueva recompensa</button>
   </header>
+
+  <p class="aviso">
+    Las recompensas de candy (ej. "pochoclo grande = 150 pts") se cargan directo en cada producto, desde
+    <strong>Admin &gt; Candy</strong>. Acá solo se maneja la recompensa de entrada gratis: al canjearla, cubre el
+    precio de una butaca común de la función que se esté comprando (no tiene un valor fijo propio).
+  </p>
 
   @if (error()) {
     <p class="aviso aviso--error">{{ error() }}</p>
   }
 
   @if (mostrarFormulario()) {
-    <form class="form-inline" [formGroup]="form" (ngSubmit)="guardar()">
+    <form class="form-recompensa" [formGroup]="form" (ngSubmit)="guardar()">
+      <h2>{{ recompensaEditando() ? 'Editar recompensa' : 'Nueva recompensa' }}</h2>
+
       <label class="campo">
         Nombre
-        <input type="text" formControlName="nombre" placeholder="Entrada gratis" />
+        <input type="text" formControlName="nombre" placeholder="Ej. Entrada gratis" />
+        @if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+          <span class="campo__error">El nombre es obligatorio.</span>
+        }
       </label>
-      <label class="campo">
-        Tipo
-        <select formControlName="tipo">
-          <option value="entrada">Entrada</option>
-          <option value="producto_candy">Producto de candy</option>
-        </select>
-      </label>
+
       <label class="campo">
         Puntos requeridos
         <input type="number" formControlName="puntos_requeridos" min="1" />
+        @if (form.controls.puntos_requeridos.invalid && form.controls.puntos_requeridos.touched) {
+          <span class="campo__error">Ingresá una cantidad de puntos mayor a 0.</span>
+        }
       </label>
-      <label class="campo">
-        Valor en crédito ($)
-        <input type="number" formControlName="valor" min="0" />
-      </label>
+
       <label class="campo campo--checkbox">
         <input type="checkbox" formControlName="activo" />
-        Activa
+        Activa (visible para canjear ya mismo)
       </label>
-      <div class="tabla__acciones">
+
+      <div class="form-recompensa__acciones">
         <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
         <button type="submit" class="btn btn--primary" [disabled]="guardando()">
           {{ guardando() ? 'Guardando...' : 'Guardar' }}
@@ -49,9 +55,7 @@
       <thead>
         <tr>
           <th>Nombre</th>
-          <th>Tipo</th>
           <th>Puntos</th>
-          <th>Valor</th>
           <th>Activa</th>
           <th></th>
         </tr>
@@ -60,9 +64,7 @@
         @for (recompensa of recompensas(); track recompensa.id) {
           <tr>
             <td>{{ recompensa.nombre }}</td>
-            <td>{{ recompensa.tipo === 'entrada' ? 'Entrada' : 'Candy' }}</td>
             <td>{{ recompensa.puntos_requeridos }} pts</td>
-            <td>{{ recompensa.valor | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
             <td>{{ recompensa.activo ? 'Sí' : 'No' }}</td>
             <td class="tabla__acciones">
               <button type="button" class="btn btn--ghost" (click)="editar(recompensa)">Editar</button>
@@ -71,7 +73,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="estado">Todavía no hay recompensas cargadas.</td>
+            <td colspan="4" class="estado">Todavía no hay recompensas cargadas.</td>
           </tr>
         }
       </tbody>
