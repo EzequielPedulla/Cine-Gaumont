@@ -32,17 +32,38 @@ export interface PeliculaFormData {
 export class PeliculasService {
   private readonly supabase = inject(SupabaseService);
 
+  // Ordenada por entradas vendidas (mail 16/01: "que se muestren primero
+  // las 3 películas más vendidas") — dentro de la cartelera, no altera el
+  // filtro por fecha_estreno que ya separa "en cartelera" de "próximamente"
+  // en el componente.
   async listarActivas(): Promise<PeliculaConGeneros[]> {
-    const { data, error } = await this.supabase.client
-      .from('peliculas')
-      .select('*, pelicula_generos(generos(id, nombre))')
-      .eq('activa', true)
-      .order('creada_en', { ascending: false })
-      .returns<PeliculaRow[]>();
+    const [{ data, error }, ventas] = await Promise.all([
+      this.supabase.client
+        .from('peliculas')
+        .select('*, pelicula_generos(generos(id, nombre))')
+        .eq('activa', true)
+        .returns<PeliculaRow[]>(),
+      this.obtenerVentasPorPelicula()
+    ]);
 
     if (error) throw error;
 
-    return data.map(this.aplanarGeneros);
+    return data
+      .map(this.aplanarGeneros)
+      .sort((a, b) => (ventas.get(b.id) ?? 0) - (ventas.get(a.id) ?? 0) || b.creada_en.localeCompare(a.creada_en));
+  }
+
+  private async obtenerVentasPorPelicula(): Promise<Map<string, number>> {
+    const { data, error } = await this.supabase.client
+      .from('pelicula_ventas')
+      .select('pelicula_id, entradas_vendidas')
+      .returns<{ pelicula_id: string; entradas_vendidas: number }[]>();
+
+    if (error) {
+      console.error('Error al leer pelicula_ventas:', error);
+      return new Map();
+    }
+    return new Map(data.map((fila) => [fila.pelicula_id, fila.entradas_vendidas]));
   }
 
   // Para el admin: trae todas, incluidas las inactivas.

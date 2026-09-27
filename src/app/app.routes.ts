@@ -65,6 +65,10 @@ export const routes: Routes = [
       {
         path: 'cupones',
         loadComponent: () => import('./features/admin/admin-cupones/admin-cupones.component').then((m) => m.AdminCuponesComponent)
+      },
+      {
+        path: 'log',
+        loadComponent: () => import('./features/admin/admin-log/admin-log.component').then((m) => m.AdminLogComponent)
       }
     ]
   },

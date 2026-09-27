@@ -1,0 +1,35 @@
+<section class="log">
+  <h1>Log de actividad</h1>
+  <p class="ayuda">Últimas {{ registros().length }} acciones registradas — quién creó/eliminó funciones y quién validó entradas.</p>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Quién</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (registro of registros(); track registro.id) {
+          <tr>
+            <td>{{ registro.creado_en | date: 'd/MM/yy HH:mm' }}</td>
+            <td>{{ autor(registro) }}</td>
+            <td>{{ etiqueta(registro) }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="estado">Todavía no hay actividad registrada.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
