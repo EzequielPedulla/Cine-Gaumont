@@ -1,0 +1,38 @@
+@if (perfil(); as perfil) {
+  <section class="perfil">
+    <h1>Mi perfil</h1>
+
+    <div class="perfil__grid">
+      <div class="perfil__dato">
+        <span class="perfil__label">Nombre</span>
+        <span class="perfil__valor">{{ perfil.nombre }} {{ perfil.apellido }}</span>
+      </div>
+      <div class="perfil__dato">
+        <span class="perfil__label">Email</span>
+        <span class="perfil__valor">{{ email() }}</span>
+      </div>
+      <div class="perfil__dato">
+        <span class="perfil__label">Fecha de nacimiento</span>
+        <span class="perfil__valor">{{ perfil.fecha_nacimiento | date: "d 'de' MMMM 'de' y" }}</span>
+      </div>
+    </div>
+
+    <div class="perfil__tarjetas">
+      <div class="tarjeta">
+        <i class="ph-fill ph-star"></i>
+        <span class="tarjeta__valor">{{ perfil.puntos_fidelidad }}</span>
+        <span class="tarjeta__label">puntos de fidelidad</span>
+      </div>
+      <div class="tarjeta">
+        <i class="ph-fill ph-wallet"></i>
+        <span class="tarjeta__valor">{{ perfil.credito_disponible | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        <span class="tarjeta__label">crédito disponible</span>
+      </div>
+    </div>
+
+    <p class="perfil__nota">
+      Sumás 1 punto de fidelidad por cada peso gastado en una compra. El crédito se carga acá cuando cancelás una entrada con
+      más de 2 horas de anticipación. (Canjear puntos por recompensas y cancelar compras todavía están en construcción.)
+    </p>
+  </section>
+}

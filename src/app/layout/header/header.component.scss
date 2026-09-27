@@ -46,6 +46,11 @@
   color: var(--color-text);
   font-weight: 600;
   font-size: 0.9rem;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-accent-amber);
+  }
 }
 
 .header__puntos {

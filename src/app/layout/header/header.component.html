@@ -15,13 +15,13 @@
     @if (authService.cargandoSesion()) {
       <!-- evita el parpadeo botones->usuario mientras se resuelve la sesión -->
     } @else if (authService.estaLogueado()) {
-      <span class="header__usuario">
+      <a routerLink="/perfil" routerLinkActive="is-active" class="header__usuario">
         <i class="ph ph-user-circle"></i>
         {{ authService.perfil()?.nombre }}
         @if (authService.perfil(); as perfil) {
           <span class="header__puntos">· {{ perfil.puntos_fidelidad }} pts</span>
         }
-      </span>
+      </a>
       <button type="button" class="btn btn--ghost" (click)="cerrarSesion()">Cerrar sesión</button>
     } @else {
       <a routerLink="/auth/login" class="btn btn--ghost">Iniciar sesión</a>

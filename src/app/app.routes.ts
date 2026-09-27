@@ -1,10 +1,16 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/peliculas/peliculas-list/peliculas-list.component').then((m) => m.PeliculasListComponent)
+  },
+  {
+    path: 'perfil',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/perfil/perfil.component').then((m) => m.PerfilComponent)
   },
   {
     path: 'auth/login',
