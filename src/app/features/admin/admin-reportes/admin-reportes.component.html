@@ -1,0 +1,41 @@
+<section class="reportes">
+  <h1>Reportes</h1>
+
+  @if (cargando()) {
+    <p class="estado">Cargando reporte...</p>
+  } @else if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  } @else if (reporte().length === 0) {
+    <p class="estado">Todavía no hay compras registradas.</p>
+  } @else {
+    <div class="reportes__tarjetas">
+      <div class="tarjeta">
+        <span class="tarjeta__valor">{{ totalFacturado() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        <span class="tarjeta__label">facturado en total</span>
+      </div>
+      <div class="tarjeta">
+        <span class="tarjeta__valor">{{ totalEntradas() }}</span>
+        <span class="tarjeta__label">entradas vendidas en total</span>
+      </div>
+    </div>
+
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Día</th>
+          <th>Entradas vendidas</th>
+          <th>Facturado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (fila of reporte(); track fila.fecha) {
+          <tr>
+            <td>{{ fila.fecha | date: "EEEE d 'de' MMMM" }}</td>
+            <td>{{ fila.entradas_vendidas }}</td>
+            <td>{{ fila.total_facturado | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>
