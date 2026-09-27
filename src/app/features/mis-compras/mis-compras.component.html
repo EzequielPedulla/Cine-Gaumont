@@ -1,0 +1,75 @@
+<section class="mis-compras">
+  <h1>Mis películas</h1>
+
+  @if (error()) {
+    <p class="aviso aviso--bloqueo">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando tus compras...</p>
+  } @else if (compras().length === 0) {
+    <p class="estado">Todavía no compraste ninguna entrada.</p>
+  } @else {
+    <ul class="lista-compras">
+      @for (compra of compras(); track compra.id) {
+        <li class="compra-item">
+          <button
+            type="button"
+            class="compra"
+            [class.compra--cancelada]="compra.estado === 'cancelada'"
+            [class.compra--abierta]="compraAbiertaId() === compra.id"
+            (click)="toggleEntrada(compra.id)"
+          >
+            @if (compra.funcion.pelicula.imagen_url) {
+              <img [src]="compra.funcion.pelicula.imagen_url" [alt]="'Póster de ' + compra.funcion.pelicula.titulo" class="compra__poster" />
+            } @else {
+              <div class="compra__poster compra__poster--placeholder"><i class="ph ph-film-slate"></i></div>
+            }
+
+            <div class="compra__info">
+              <h2>{{ compra.funcion.pelicula.titulo }}</h2>
+              <p class="compra__meta">
+                {{ compra.funcion.fecha_hora | date: "EEEE d 'de' MMMM, HH:mm" }} · Sala {{ compra.funcion.sala.nombre }} ·
+                {{ compra.funcion.formato }}
+              </p>
+              <p class="compra__butacas">
+                Butacas:
+                @for (butaca of compra.reservas_butacas; track butaca.fila + '-' + butaca.columna; let last = $last) {
+                  {{ butaca.fila }}{{ butaca.columna }}{{ last ? '' : ', ' }}
+                }
+              </p>
+              <p class="compra__total">
+                {{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}
+                <span class="compra__estado" [class.compra__estado--cancelada]="compra.estado === 'cancelada'">
+                  {{ compra.estado === 'activa' ? 'Activa' : compra.estado === 'cancelada' ? 'Cancelada' : 'Validada' }}
+                </span>
+              </p>
+            </div>
+
+            <i class="ph ph-caret-down compra__caret" [class.compra__caret--abierta]="compraAbiertaId() === compra.id"></i>
+          </button>
+
+          @if (compraAbiertaId() === compra.id) {
+            <app-comprobante-entrada
+              [peliculaTitulo]="compra.funcion.pelicula.titulo"
+              [fechaHora]="compra.funcion.fecha_hora"
+              [sala]="compra.funcion.sala.nombre"
+              [formato]="compra.funcion.formato"
+              [idioma]="compra.funcion.idioma"
+              [butacas]="butacasParaTicket(compra)"
+              [total]="compra.total"
+              [qrCode]="compra.qr_code"
+              [estado]="compra.estado === 'activa' ? 'Entrada válida' : compra.estado === 'cancelada' ? 'Cancelada' : 'Ya validada'"
+            />
+          }
+
+          @if (puedeCancelar(compra)) {
+            <button type="button" class="btn btn--ghost compra__cancelar" [disabled]="cancelandoId() === compra.id" (click)="cancelar(compra)">
+              {{ cancelandoId() === compra.id ? 'Cancelando...' : 'Cancelar' }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

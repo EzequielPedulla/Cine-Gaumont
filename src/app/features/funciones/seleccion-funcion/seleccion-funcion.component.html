@@ -16,6 +16,26 @@
       </div>
     </header>
 
+    @if (gruposPorDia().length === 0) {
+      <p class="estado">Todavía no hay funciones programadas para esta película.</p>
+    } @else {
+      @for (grupo of gruposPorDia(); track grupo.fecha) {
+        <div class="dia">
+          <h2 class="dia__titulo">{{ grupo.etiqueta }}</h2>
+          <div class="dia__horarios">
+            @for (funcion of grupo.funciones; track funcion.id) {
+              <button type="button" class="horario" (click)="irAButacas(funcion.id)">
+                <span class="horario__hora">{{ funcion.fecha_hora | date: 'HH:mm' }}</span>
+                <span class="horario__sala">{{ funcion.sala.nombre }}</span>
+                <span class="pill">{{ funcion.formato }}</span>
+                <span class="pill">{{ funcion.idioma === 'castellano' ? 'DOB' : 'SUB' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    }
+
     <section class="resenas">
       <div class="resenas__resumen">
         @if (promedio(); as promedio) {
@@ -77,26 +97,6 @@
         </ul>
       }
     </section>
-
-    @if (gruposPorDia().length === 0) {
-      <p class="estado">Todavía no hay funciones programadas para esta película.</p>
-    } @else {
-      @for (grupo of gruposPorDia(); track grupo.fecha) {
-        <div class="dia">
-          <h2 class="dia__titulo">{{ grupo.etiqueta }}</h2>
-          <div class="dia__horarios">
-            @for (funcion of grupo.funciones; track funcion.id) {
-              <button type="button" class="horario" (click)="irAButacas(funcion.id)">
-                <span class="horario__hora">{{ funcion.fecha_hora | date: 'HH:mm' }}</span>
-                <span class="horario__sala">{{ funcion.sala.nombre }}</span>
-                <span class="pill">{{ funcion.formato }}</span>
-                <span class="pill">{{ funcion.idioma === 'castellano' ? 'DOB' : 'SUB' }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      }
-    }
   </section>
   }
 }

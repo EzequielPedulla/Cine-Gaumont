@@ -6,6 +6,12 @@
   <nav class="header__nav">
     <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Cartelera</a>
     <a routerLink="/" fragment="proximamente">Próximamente</a>
+    @if (authService.estaLogueado()) {
+      <a routerLink="/mis-compras" routerLinkActive="is-active">Mis películas</a>
+    }
+    @if (authService.esEmpleado()) {
+      <a routerLink="/empleado/validar" routerLinkActive="is-active">Validar entrada</a>
+    }
     @if (authService.esAdmin()) {
       <a routerLink="/admin" routerLinkActive="is-active">Admin</a>
     }

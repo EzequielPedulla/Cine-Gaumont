@@ -3,7 +3,6 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { filter, firstValueFrom, take } from 'rxjs';
-import * as QRCode from 'qrcode';
 import { FuncionesService } from '../../../core/services/funciones.service';
 import { PeliculasService } from '../../../core/services/peliculas.service';
 import { ButacaSeleccionada, ButacasService } from '../../../core/services/butacas.service';
@@ -14,6 +13,7 @@ import { PeliculaConGeneros } from '../../../core/models/pelicula.model';
 import { ReservaButaca } from '../../../core/models/compra.model';
 import { Cupon } from '../../../core/models/cupon.model';
 import { Butaca, generarLayoutSala } from '../../../core/sala-layout';
+import { ComprobanteEntradaComponent } from '../../../shared/ui/comprobante-entrada/comprobante-entrada.component';
 
 export interface ButacaComprada extends ButacaSeleccionada {
   esVip: boolean;
@@ -22,7 +22,6 @@ export interface ButacaComprada extends ButacaSeleccionada {
 export interface Comprobante {
   compraId: string;
   qrCode: string;
-  qrImagenUrl: string;
   butacas: ButacaComprada[];
   total: number;
 }
@@ -37,7 +36,7 @@ function esVip(fila: string): boolean {
 
 @Component({
   selector: 'app-butacas',
-  imports: [DatePipe, CurrencyPipe, RouterLink],
+  imports: [DatePipe, CurrencyPipe, RouterLink, ComprobanteEntradaComponent],
   templateUrl: './butacas.component.html',
   styleUrl: './butacas.component.scss'
 })
@@ -219,16 +218,9 @@ export class ButacasComponent {
         total
       });
 
-      // El QR se genera en el cliente a partir del código de la compra: es
-      // una imagen (dataURL) que cualquier lector de QR puede escanear, no
-      // solo un string — así el comprobante impreso sirve de verdad en la
-      // puerta de la sala.
-      const qrImagenUrl = await QRCode.toDataURL(resultado.qrCode, { width: 220, margin: 1 });
-
       this.compraConfirmada.set({
         compraId: resultado.compraId,
         qrCode: resultado.qrCode,
-        qrImagenUrl,
         butacas: butacas.map((b) => ({ ...b, esVip: esVip(b.fila) })).sort((a, b) => a.fila.localeCompare(b.fila) || a.columna - b.columna),
         total
       });

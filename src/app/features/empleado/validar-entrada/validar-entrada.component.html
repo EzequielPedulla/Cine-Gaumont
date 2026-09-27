@@ -1,0 +1,38 @@
+<section class="validar">
+  <h1>Validar entrada</h1>
+  <p class="ayuda">Ingresá el código de la entrada (el que se ve debajo del QR en el comprobante) y confirmá.</p>
+
+  <div class="validar__form">
+    <input
+      type="text"
+      placeholder="Código de la entrada"
+      autofocus
+      [value]="codigo()"
+      (input)="onEscribir($any($event.target).value)"
+      (keyup.enter)="validar()"
+    />
+    <button type="button" class="btn btn--primary" [disabled]="validando() || !codigo().trim()" (click)="validar()">
+      {{ validando() ? 'Validando...' : 'Validar' }}
+    </button>
+  </div>
+
+  @if (resultado(); as r) {
+    <div class="resultado resultado--ok">
+      <i class="ph-fill ph-check-circle"></i>
+      <div>
+        <strong>Entrada válida</strong>
+        <p>{{ r.pelicula_titulo }} · {{ r.fecha_hora | date: "d/MM HH:mm" }} · {{ r.cantidad_butacas }} butaca(s)</p>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="resultado resultado--error">
+      <i class="ph-fill ph-x-circle"></i>
+      <div>
+        <strong>No válida</strong>
+        <p>{{ error() }}</p>
+      </div>
+    </div>
+  }
+</section>

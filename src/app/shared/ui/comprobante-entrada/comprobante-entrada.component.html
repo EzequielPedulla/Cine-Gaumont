@@ -1,0 +1,33 @@
+<div class="comprobante">
+  <header class="comprobante__header">
+    <span class="comprobante__marca">Cine Gaumont</span>
+    <span class="comprobante__estado">{{ estado() }}</span>
+  </header>
+
+  <h2 class="comprobante__titulo">{{ peliculaTitulo() }}</h2>
+
+  <p class="comprobante__meta">
+    {{ fechaHora() | date: "EEEE d 'de' MMMM, HH:mm" }} · Sala {{ sala() }} · {{ formato() }} ·
+    {{ idioma() === 'castellano' ? 'Castellano' : 'Subtitulada' }}
+  </p>
+
+  <div class="comprobante__butacas">
+    @for (butaca of butacas(); track butaca.fila + '-' + butaca.columna) {
+      <span class="comprobante__butaca" [class.comprobante__butaca--vip]="butaca.esVip">
+        {{ butaca.fila }}{{ butaca.columna }}
+        @if (butaca.esVip) {
+          (VIP)
+        }
+      </span>
+    }
+  </div>
+
+  <p class="comprobante__total">Total pagado: {{ total() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
+
+  <div class="comprobante__qr">
+    @if (qrImagenUrl(); as url) {
+      <img [src]="url" alt="Código QR de la entrada" width="180" height="180" />
+    }
+    <code class="comprobante__codigo">{{ qrCode() }}</code>
+  </div>
+</div>

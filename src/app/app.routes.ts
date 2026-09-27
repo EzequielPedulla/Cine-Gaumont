@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { empleadoGuard } from './core/guards/empleado.guard';
 
 export const routes: Routes = [
   {
@@ -11,6 +12,16 @@ export const routes: Routes = [
     path: 'perfil',
     canActivate: [authGuard],
     loadComponent: () => import('./features/perfil/perfil.component').then((m) => m.PerfilComponent)
+  },
+  {
+    path: 'mis-compras',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/mis-compras/mis-compras.component').then((m) => m.MisComprasComponent)
+  },
+  {
+    path: 'empleado/validar',
+    canActivate: [empleadoGuard],
+    loadComponent: () => import('./features/empleado/validar-entrada/validar-entrada.component').then((m) => m.ValidarEntradaComponent)
   },
   {
     path: 'auth/login',

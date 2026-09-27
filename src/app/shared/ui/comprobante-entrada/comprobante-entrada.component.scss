@@ -1,0 +1,85 @@
+/* Fondo/texto fijos (no tokens de tema): tiene que verse igual de bien en
+   una hoja impresa en blanco, sin importar si el sitio estaba en modo
+   oscuro. */
+.comprobante {
+  text-align: left;
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px dashed #c7c2b8;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.comprobante__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #706a5c;
+  margin-bottom: var(--space-3);
+}
+
+.comprobante__estado {
+  color: #2f8f5b;
+  font-weight: 700;
+}
+
+.comprobante__titulo {
+  margin: 0 0 var(--space-1);
+}
+
+.comprobante__meta {
+  color: #706a5c;
+  text-transform: capitalize;
+  margin: 0 0 var(--space-4);
+}
+
+.comprobante__butacas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.comprobante__butaca {
+  border: 1px solid #c7c2b8;
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  &--vip {
+    border-color: var(--color-accent-amber);
+    color: #96690f;
+  }
+}
+
+.comprobante__total {
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+}
+
+.comprobante__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px dashed #c7c2b8;
+  min-height: 48px;
+}
+
+.comprobante__codigo {
+  font-size: 0.75rem;
+  color: #706a5c;
+  word-break: break-all;
+  text-align: center;
+}
+
+@media print {
+  .comprobante {
+    border-style: solid;
+  }
+}

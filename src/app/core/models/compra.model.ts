@@ -26,3 +26,14 @@ export interface Compra {
   estado: EstadoCompra;
   creada_en: string;
 }
+
+export interface CompraConDetalle extends Compra {
+  funcion: {
+    fecha_hora: string;
+    formato: string;
+    idioma: string;
+    sala: { nombre: string };
+    pelicula: { titulo: string; imagen_url: string | null };
+  };
+  reservas_butacas: { fila: string; columna: number }[];
+}

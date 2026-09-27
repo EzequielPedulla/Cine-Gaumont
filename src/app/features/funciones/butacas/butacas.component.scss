@@ -262,96 +262,17 @@
   flex-wrap: wrap;
 }
 
-/* Ticket del comprobante — es lo único que queda visible al imprimir
-   (ver @media print más abajo), así que su fondo/texto van fijos en vez
-   de usar los tokens de tema: tiene que verse igual de bien en una hoja
-   blanca sin importar si el usuario tenía el sitio en modo oscuro. */
-.comprobante {
-  text-align: left;
-  background: #fff;
-  color: #1a1a1a;
-  border: 1px dashed #c7c2b8;
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
+app-comprobante-entrada {
+  display: block;
   margin-top: var(--space-4);
 }
 
-.comprobante__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #706a5c;
-  margin-bottom: var(--space-3);
-}
-
-.comprobante__estado {
-  color: #2f8f5b;
-  font-weight: 700;
-}
-
-.comprobante__titulo {
-  margin: 0 0 var(--space-1);
-}
-
-.comprobante__meta {
-  color: #706a5c;
-  text-transform: capitalize;
-  margin: 0 0 var(--space-4);
-}
-
-.comprobante__butacas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-
-.comprobante__butaca {
-  border: 1px solid #c7c2b8;
-  border-radius: var(--radius-sm);
-  padding: 2px var(--space-2);
-  font-size: 0.85rem;
-  font-weight: 600;
-
-  &--vip {
-    border-color: var(--color-accent-amber);
-    color: #96690f;
-  }
-}
-
-.comprobante__total {
-  font-weight: 700;
-  margin-bottom: var(--space-4);
-}
-
-.comprobante__qr {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  padding-top: var(--space-4);
-  border-top: 1px dashed #c7c2b8;
-}
-
-.comprobante__codigo {
-  font-size: 0.75rem;
-  color: #706a5c;
-  word-break: break-all;
-  text-align: center;
-}
-
 /* Al imprimir (o "Guardar como PDF" desde el diálogo de impresión), solo
-   queda el ticket: nada de header/footer/botones del sitio. */
+   queda el ticket: nada de header/footer/botones del sitio. Los estilos
+   propios del ticket (incluido su @media print) viven en
+   comprobante-entrada.component.scss. */
 @media print {
   .confirmacion__pantalla-solo {
     display: none;
-  }
-
-  .comprobante {
-    border-style: solid;
-    margin: 0;
   }
 }

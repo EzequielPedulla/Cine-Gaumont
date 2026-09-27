@@ -9,39 +9,18 @@
         <p>Este es tu comprobante — mostralo (impreso o desde el celular) para ingresar a la función.</p>
       </div>
 
-      <div class="comprobante">
-        <header class="comprobante__header">
-          <span class="comprobante__marca">Cine Gaumont</span>
-          <span class="comprobante__estado">Entrada válida</span>
-        </header>
-
-        <h2 class="comprobante__titulo">{{ pelicula()?.titulo }}</h2>
-
-        @if (funcion(); as funcion) {
-          <p class="comprobante__meta">
-            {{ funcion.fecha_hora | date: "EEEE d 'de' MMMM, HH:mm" }} · Sala {{ funcion.sala.nombre }} · {{ funcion.formato }} ·
-            {{ funcion.idioma === 'castellano' ? 'Castellano' : 'Subtitulada' }}
-          </p>
-        }
-
-        <div class="comprobante__butacas">
-          @for (butaca of compra.butacas; track butaca.fila + '-' + butaca.columna) {
-            <span class="comprobante__butaca" [class.comprobante__butaca--vip]="butaca.esVip">
-              {{ butaca.fila }}{{ butaca.columna }}
-              @if (butaca.esVip) {
-                (VIP)
-              }
-            </span>
-          }
-        </div>
-
-        <p class="comprobante__total">Total pagado: {{ compra.total | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</p>
-
-        <div class="comprobante__qr">
-          <img [src]="compra.qrImagenUrl" alt="Código QR de la entrada" width="180" height="180" />
-          <code class="comprobante__codigo">{{ compra.qrCode }}</code>
-        </div>
-      </div>
+      @if (funcion(); as funcion) {
+        <app-comprobante-entrada
+          [peliculaTitulo]="pelicula()?.titulo ?? ''"
+          [fechaHora]="funcion.fecha_hora"
+          [sala]="funcion.sala.nombre"
+          [formato]="funcion.formato"
+          [idioma]="funcion.idioma"
+          [butacas]="compra.butacas"
+          [total]="compra.total"
+          [qrCode]="compra.qrCode"
+        />
+      }
 
       <div class="confirmacion__pantalla-solo confirmacion__acciones">
         <button type="button" class="btn btn--outline" (click)="imprimirComprobante()">
