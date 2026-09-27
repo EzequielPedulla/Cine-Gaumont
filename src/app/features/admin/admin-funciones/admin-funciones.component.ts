@@ -38,16 +38,46 @@ export class AdminFuncionesComponent {
   ];
   readonly diasSemanaSeleccionados = signal<ReadonlySet<number>>(new Set());
 
+  // Selectores propios de fecha/hora (mail 28/02: la consigna pide
+  // explícitamente evitar el input nativo del navegador) — mismo patrón de
+  // día/mes/año que ya usa registro.component.ts para la fecha de
+  // nacimiento. Los minutos van de a 15 porque nadie programa una función
+  // de cine a, por ejemplo, las 20:07.
+  readonly dias = Array.from({ length: 31 }, (_, i) => i + 1);
+  readonly meses = [
+    { valor: 1, nombre: 'Enero' },
+    { valor: 2, nombre: 'Febrero' },
+    { valor: 3, nombre: 'Marzo' },
+    { valor: 4, nombre: 'Abril' },
+    { valor: 5, nombre: 'Mayo' },
+    { valor: 6, nombre: 'Junio' },
+    { valor: 7, nombre: 'Julio' },
+    { valor: 8, nombre: 'Agosto' },
+    { valor: 9, nombre: 'Septiembre' },
+    { valor: 10, nombre: 'Octubre' },
+    { valor: 11, nombre: 'Noviembre' },
+    { valor: 12, nombre: 'Diciembre' }
+  ];
+  private readonly anioActual = new Date().getFullYear();
+  readonly anios = [this.anioActual, this.anioActual + 1];
+  readonly horas = Array.from({ length: 24 }, (_, i) => i);
+  readonly minutos = [0, 15, 30, 45];
+
   readonly form = this.fb.nonNullable.group({
     peliculaId: ['', Validators.required],
-    fecha: ['', Validators.required],
-    hora: ['', Validators.required],
+    fechaDia: [null as number | null, Validators.required],
+    fechaMes: [null as number | null, Validators.required],
+    fechaAnio: [null as number | null, Validators.required],
+    horaH: [null as number | null, Validators.required],
+    horaM: [null as number | null, Validators.required],
     formato: ['2D', Validators.required],
     idioma: ['castellano', Validators.required],
     precioBase: [3000, [Validators.required, Validators.min(0)]],
     precioVip: [4500, [Validators.required, Validators.min(0)]],
     repetir: [false],
-    fechaHasta: ['']
+    fechaHastaDia: [null as number | null],
+    fechaHastaMes: [null as number | null],
+    fechaHastaAnio: [null as number | null]
   });
 
   constructor() {
@@ -88,19 +118,27 @@ export class AdminFuncionesComponent {
     const pelicula = this.peliculas().find((p) => p.id === valores.peliculaId);
     if (!pelicula) return;
 
+    const fechaDesde = this.combinarFecha(valores.fechaAnio, valores.fechaMes, valores.fechaDia);
+    const hora = this.combinarHora(valores.horaH, valores.horaM);
+    if (!fechaDesde || !hora) {
+      this.error.set('Completá la fecha y el horario de la función.');
+      return;
+    }
+
     let fechas: string[];
     if (valores.repetir) {
-      if (!valores.fechaHasta || this.diasSemanaSeleccionados().size === 0) {
+      const fechaHasta = this.combinarFecha(valores.fechaHastaAnio, valores.fechaHastaMes, valores.fechaHastaDia);
+      if (!fechaHasta || this.diasSemanaSeleccionados().size === 0) {
         this.error.set('Para repetir, elegí al menos un día de la semana y una fecha "hasta".');
         return;
       }
-      fechas = this.generarFechas(valores.fecha, valores.fechaHasta, this.diasSemanaSeleccionados());
+      fechas = this.generarFechas(fechaDesde, fechaHasta, this.diasSemanaSeleccionados());
       if (fechas.length === 0) {
         this.error.set('Ninguna fecha del rango elegido cae en los días seleccionados.');
         return;
       }
     } else {
-      fechas = [valores.fecha];
+      fechas = [fechaDesde];
     }
 
     this.guardando.set(true);
@@ -115,7 +153,7 @@ export class AdminFuncionesComponent {
         const sala = await this.funcionesService.crear({
           peliculaId: pelicula.id,
           fecha,
-          hora: valores.hora,
+          hora,
           duracionMin: pelicula.duracion_min,
           formato: valores.formato as '2D' | '3D' | '4D' | '5D',
           idioma: valores.idioma as 'castellano' | 'subtitulada',
@@ -146,7 +184,17 @@ export class AdminFuncionesComponent {
     // Si algo falló, dejamos el formulario como estaba para que sea fácil
     // ajustar y reintentar, en vez de obligar a cargar todo de nuevo.
     if (fallidas.length === 0) {
-      this.form.patchValue({ fecha: '', hora: '', fechaHasta: '', repetir: false });
+      this.form.patchValue({
+        fechaDia: null,
+        fechaMes: null,
+        fechaAnio: null,
+        horaH: null,
+        horaM: null,
+        fechaHastaDia: null,
+        fechaHastaMes: null,
+        fechaHastaAnio: null,
+        repetir: false
+      });
       this.diasSemanaSeleccionados.set(new Set());
     }
 
@@ -165,6 +213,16 @@ export class AdminFuncionesComponent {
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'No pudimos eliminar la función.');
     }
+  }
+
+  private combinarFecha(anio: number | null, mes: number | null, dia: number | null): string | null {
+    if (!anio || !mes || !dia) return null;
+    return `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+  }
+
+  private combinarHora(hora: number | null, minuto: number | null): string | null {
+    if (hora === null || minuto === null) return null;
+    return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
   }
 
   private generarFechas(desdeIso: string, hastaIso: string, dias: ReadonlySet<number>): string[] {

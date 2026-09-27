@@ -45,6 +45,75 @@
   color: var(--color-accent-amber);
 }
 
+.link-quitar {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: var(--space-2);
+  color: inherit;
+  text-decoration: underline;
+  opacity: 0.75;
+  font-weight: 400;
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.resumen__cupon-aplicado {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  color: var(--color-accent-teal);
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  i {
+    font-size: 0.85rem;
+  }
+}
+
+.resumen__cupon-form {
+  display: flex;
+  gap: 6px;
+  margin-top: var(--space-2);
+
+  input {
+    width: 120px;
+    padding: 4px var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+  }
+
+  button {
+    padding: 4px var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    background: transparent;
+    color: var(--color-accent-teal);
+    font-size: 0.78rem;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.resumen__cupon-error {
+  margin: 4px 0 0;
+  color: var(--color-error);
+  font-size: 0.75rem;
+}
+
 .pantalla {
   text-align: center;
   padding: var(--space-2);
@@ -165,6 +234,13 @@
   color: var(--color-text);
   font-size: 1.3rem;
   font-weight: 700;
+}
+
+.resumen__subtotal-tachado {
+  display: block;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  font-size: 0.85rem;
 }
 
 .confirmacion {

@@ -50,6 +50,10 @@ export const routes: Routes = [
       {
         path: 'reportes',
         loadComponent: () => import('./features/admin/admin-reportes/admin-reportes.component').then((m) => m.AdminReportesComponent)
+      },
+      {
+        path: 'cupones',
+        loadComponent: () => import('./features/admin/admin-cupones/admin-cupones.component').then((m) => m.AdminCuponesComponent)
       }
     ]
   },

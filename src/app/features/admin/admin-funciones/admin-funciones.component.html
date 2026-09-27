@@ -23,21 +23,53 @@
       }
     </label>
 
-    <div class="campo-fila">
-      <label class="campo">
-        {{ form.value.repetir ? 'Desde' : 'Fecha' }}
-        <input type="date" formControlName="fecha" />
-        @if (form.get('fecha')?.invalid && form.get('fecha')?.touched) {
-          <span class="campo__error">Elegí una fecha.</span>
-        }
-      </label>
-      <label class="campo">
-        Hora
-        <input type="time" formControlName="hora" />
-        @if (form.get('hora')?.invalid && form.get('hora')?.touched) {
-          <span class="campo__error">Elegí un horario.</span>
-        }
-      </label>
+    <div class="campo">
+      <span class="campo__label">{{ form.value.repetir ? 'Desde' : 'Fecha' }}</span>
+      <div class="selector-fecha">
+        <select formControlName="fechaDia" aria-label="Día">
+          <option [ngValue]="null" disabled>Día</option>
+          @for (dia of dias; track dia) {
+            <option [ngValue]="dia">{{ dia }}</option>
+          }
+        </select>
+        <select formControlName="fechaMes" aria-label="Mes">
+          <option [ngValue]="null" disabled>Mes</option>
+          @for (mes of meses; track mes.valor) {
+            <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
+          }
+        </select>
+        <select formControlName="fechaAnio" aria-label="Año">
+          <option [ngValue]="null" disabled>Año</option>
+          @for (anio of anios; track anio) {
+            <option [ngValue]="anio">{{ anio }}</option>
+          }
+        </select>
+      </div>
+      @if ((form.get('fechaDia')?.touched || form.get('fechaMes')?.touched || form.get('fechaAnio')?.touched) &&
+        (form.get('fechaDia')?.invalid || form.get('fechaMes')?.invalid || form.get('fechaAnio')?.invalid)) {
+        <span class="campo__error">Completá día, mes y año.</span>
+      }
+    </div>
+
+    <div class="campo">
+      <span class="campo__label">Hora</span>
+      <div class="selector-hora">
+        <select formControlName="horaH" aria-label="Hora">
+          <option [ngValue]="null" disabled>Hora</option>
+          @for (h of horas; track h) {
+            <option [ngValue]="h">{{ h.toString().padStart(2, '0') }}</option>
+          }
+        </select>
+        <select formControlName="horaM" aria-label="Minuto">
+          <option [ngValue]="null" disabled>Min.</option>
+          @for (m of minutos; track m) {
+            <option [ngValue]="m">{{ m.toString().padStart(2, '0') }}</option>
+          }
+        </select>
+      </div>
+      @if ((form.get('horaH')?.touched || form.get('horaM')?.touched) && (form.get('horaH')?.invalid || form.get('horaM')?.invalid)) {
+        <span class="campo__error">Elegí un horario.</span>
+      }
     </div>
 
     <label class="campo campo--checkbox">
@@ -63,13 +95,29 @@
           </div>
         </div>
 
-        <label class="campo">
-          Hasta
-          <input type="date" formControlName="fechaHasta" />
-          @if (form.value.repetir && !form.value.fechaHasta && form.get('fechaHasta')?.touched) {
-            <span class="campo__error">Elegí hasta qué fecha repetir.</span>
-          }
-        </label>
+        <div class="campo">
+          <span class="campo__label">Hasta</span>
+          <div class="selector-fecha">
+            <select formControlName="fechaHastaDia" aria-label="Día hasta">
+              <option [ngValue]="null" disabled>Día</option>
+              @for (dia of dias; track dia) {
+                <option [ngValue]="dia">{{ dia }}</option>
+              }
+            </select>
+            <select formControlName="fechaHastaMes" aria-label="Mes hasta">
+              <option [ngValue]="null" disabled>Mes</option>
+              @for (mes of meses; track mes.valor) {
+                <option [ngValue]="mes.valor">{{ mes.nombre }}</option>
+              }
+            </select>
+            <select formControlName="fechaHastaAnio" aria-label="Año hasta">
+              <option [ngValue]="null" disabled>Año</option>
+              @for (anio of anios; track anio) {
+                <option [ngValue]="anio">{{ anio }}</option>
+              }
+            </select>
+          </div>
+        </div>
       </div>
     }
 

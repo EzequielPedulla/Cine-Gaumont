@@ -1,0 +1,81 @@
+<div class="admin-cupones">
+  <header class="admin-cupones__header">
+    <h1>Cupones</h1>
+    <button type="button" class="btn btn--primary" (click)="nuevoCupon()">+ Nuevo cupón</button>
+  </header>
+
+  @if (error()) {
+    <p class="aviso aviso--error">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <form class="form-inline" [formGroup]="form" (ngSubmit)="guardar()">
+      <label class="campo">
+        Código
+        <input type="text" formControlName="codigo" placeholder="BIENVENIDA20" />
+      </label>
+      <label class="campo">
+        Porcentaje
+        <input type="number" formControlName="porcentaje" min="1" max="100" />
+      </label>
+      <label class="campo">
+        Se aplica a
+        <select formControlName="condicion">
+          <option value="primera_compra">Primera compra del usuario</option>
+          <option value="mayor_50">Usuarios mayores de 50 años</option>
+          <option value="ninguna">Ninguna (cupón manual)</option>
+        </select>
+      </label>
+      <label class="campo campo--checkbox">
+        <input type="checkbox" formControlName="activo" />
+        Activo
+      </label>
+      <div class="tabla__acciones">
+        <button type="button" class="btn btn--ghost" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p class="estado">Cargando...</p>
+  } @else {
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Porcentaje</th>
+          <th>Se aplica a</th>
+          <th>Activo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (cupon of cupones(); track cupon.id) {
+          <tr>
+            <td>{{ cupon.codigo }}</td>
+            <td>{{ cupon.porcentaje }}%</td>
+            <td>
+              @switch (cupon.condicion) {
+                @case ('primera_compra') { Primera compra }
+                @case ('mayor_50') { Mayores de 50 }
+                @default { Manual }
+              }
+            </td>
+            <td>{{ cupon.activo ? 'Sí' : 'No' }}</td>
+            <td class="tabla__acciones">
+              <button type="button" class="btn btn--ghost" (click)="editar(cupon)">Editar</button>
+              <button type="button" class="btn btn--ghost" (click)="eliminar(cupon)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="estado">Todavía no hay cupones cargados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LogoComponent } from '../../shared/ui/logo/logo.component';
 
@@ -11,8 +11,13 @@ import { LogoComponent } from '../../shared/ui/logo/logo.component';
 })
 export class HeaderComponent {
   readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  cerrarSesion(): void {
-    this.authService.cerrarSesion();
+  // Navegar a "/" después de cerrar sesión evita quedar parado en una
+  // pantalla que ya no debería verse (admin, perfil) esperando a que algo
+  // más te saque de ahí.
+  async cerrarSesion(): Promise<void> {
+    await this.authService.cerrarSesion();
+    this.router.navigateByUrl('/');
   }
 }

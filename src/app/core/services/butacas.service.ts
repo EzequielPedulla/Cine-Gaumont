@@ -11,6 +11,7 @@ export interface DatosCompra {
   funcionId: string;
   butacas: ButacaSeleccionada[];
   usuarioId: string | null;
+  cuponId: string | null;
   subtotal: number;
   total: number;
 }
@@ -58,6 +59,7 @@ export class ButacasService {
       .insert({
         usuario_id: datos.usuarioId,
         funcion_id: datos.funcionId,
+        cupon_id: datos.cuponId,
         subtotal: datos.subtotal,
         total: datos.total,
         puntos_ganados: puntosGanados,

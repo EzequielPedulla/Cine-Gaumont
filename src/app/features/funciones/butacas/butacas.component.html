@@ -115,7 +115,33 @@
     <footer class="resumen">
       <div class="resumen__info">
         <strong>{{ seleccionadas().size }}</strong> butaca(s) seleccionada(s)
-        <span class="resumen__total">{{ totalSeleccion() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        @if (cuponAplicado()) {
+          <span class="resumen__subtotal-tachado">{{ totalSeleccion() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+        }
+        <span class="resumen__total">{{ totalConDescuento() | currency: 'ARS' : 'symbol-narrow' : '1.0-0' }}</span>
+
+        @if (cuponAplicado(); as cupon) {
+          <p class="resumen__cupon-aplicado">
+            <i class="ph-fill ph-ticket"></i> {{ cupon.codigo }} · -{{ cupon.porcentaje }}%
+            <button type="button" class="link-quitar" (click)="quitarCupon()">Quitar</button>
+          </p>
+        } @else {
+          <div class="resumen__cupon-form">
+            <input
+              type="text"
+              placeholder="Código de cupón"
+              [value]="codigoCupon()"
+              (input)="codigoCupon.set($any($event.target).value)"
+              (keyup.enter)="aplicarCupon()"
+            />
+            <button type="button" [disabled]="aplicandoCupon() || !codigoCupon().trim()" (click)="aplicarCupon()">
+              {{ aplicandoCupon() ? '...' : 'Aplicar' }}
+            </button>
+          </div>
+          @if (errorCupon()) {
+            <p class="resumen__cupon-error">{{ errorCupon() }}</p>
+          }
+        }
       </div>
 
       @if (error()) {
