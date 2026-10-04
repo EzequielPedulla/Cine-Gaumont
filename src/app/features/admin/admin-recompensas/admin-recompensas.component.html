@@ -1,14 +1,12 @@
 <div class="admin-recompensas">
   <header class="admin-recompensas__header">
-    <h1>Recompensas de entrada</h1>
-    <button type="button" class="btn btn--primary" (click)="nuevaRecompensa()">+ Nueva recompensa</button>
+    <h1>Recompensa de entrada</h1>
+    @if (!cargando() && !recompensa() && !mostrarFormulario()) {
+      <button type="button" class="btn btn--primary" (click)="configurar()">Configurar recompensa</button>
+    }
   </header>
 
-  <p class="aviso">
-    Las recompensas de candy (ej. "pochoclo grande = 150 pts") se cargan directo en cada producto, desde
-    <strong>Admin &gt; Candy</strong>. Acá solo se maneja la recompensa de entrada gratis: al canjearla, cubre el
-    precio de una butaca común de la función que se esté comprando (no tiene un valor fijo propio).
-  </p>
+  
 
   @if (error()) {
     <p class="aviso aviso--error">{{ error() }}</p>
@@ -16,7 +14,7 @@
 
   @if (mostrarFormulario()) {
     <form class="form-recompensa" [formGroup]="form" (ngSubmit)="guardar()">
-      <h2>{{ recompensaEditando() ? 'Editar recompensa' : 'Nueva recompensa' }}</h2>
+      <h2>{{ recompensa() ? 'Editar recompensa' : 'Configurar recompensa' }}</h2>
 
       <label class="campo">
         Nombre
@@ -51,32 +49,29 @@
   @if (cargando()) {
     <p class="estado">Cargando...</p>
   } @else {
-    <table class="tabla">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Puntos</th>
-          <th>Activa</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (recompensa of recompensas(); track recompensa.id) {
+    @if (recompensa(); as r) {
+      <table class="tabla">
+        <thead>
           <tr>
-            <td>{{ recompensa.nombre }}</td>
-            <td>{{ recompensa.puntos_requeridos }} pts</td>
-            <td>{{ recompensa.activo ? 'Sí' : 'No' }}</td>
+            <th>Nombre</th>
+            <th>Puntos</th>
+            <th>Activa</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ r.nombre }}</td>
+            <td>{{ r.puntos_requeridos }} pts</td>
+            <td>{{ r.activo ? 'Sí' : 'No' }}</td>
             <td class="tabla__acciones">
-              <button type="button" class="btn btn--ghost" (click)="editar(recompensa)">Editar</button>
-              <button type="button" class="btn btn--ghost" (click)="eliminar(recompensa)">Eliminar</button>
+              <button type="button" class="btn btn--ghost" (click)="editar(r)">Editar</button>
             </td>
           </tr>
-        } @empty {
-          <tr>
-            <td colspan="4" class="estado">Todavía no hay recompensas cargadas.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    } @else {
+      <p class="estado">Todavía no hay recompensa de entrada configurada.</p>
+    }
   }
 </div>

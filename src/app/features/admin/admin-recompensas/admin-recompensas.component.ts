@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RecompensasService, RecompensaFormData } from '../../../core/services/recompensas.service';
-import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Recompensa } from '../../../core/models/recompensa.model';
 
 @Component({
@@ -13,21 +12,19 @@ import { Recompensa } from '../../../core/models/recompensa.model';
 export class AdminRecompensasComponent {
   private readonly fb = inject(FormBuilder);
   private readonly recompensasService = inject(RecompensasService);
-  private readonly confirmDialog = inject(ConfirmDialogService);
 
-  readonly recompensas = signal<Recompensa[]>([]);
+  // Hay UNA sola recompensa de tipo "entrada" (config global, requerimientos:
+  // "entrada = 500 pts"): al canjear cubre una butaca común, se llame como
+  // se llame, así que no tiene sentido tener varias. La base también lo
+  // fuerza (migración 031). Las de candy se cargan en cada producto desde
+  // Admin > Candy. Si hay que dejar de ofrecerla se desactiva (no se borra)
+  // para no romper el historial de canjes.
+  readonly recompensa = signal<Recompensa | null>(null);
   readonly cargando = signal(true);
   readonly error = signal<string | null>(null);
   readonly guardando = signal(false);
 
   readonly mostrarFormulario = signal(false);
-  readonly recompensaEditando = signal<Recompensa | null>(null);
-
-  // Esta pantalla solo maneja recompensas de tipo "entrada" (una config
-  // global, mail 03/03: "entrada = 500 pts") — las de candy ahora se cargan
-  // directo en cada producto desde Admin > Candy. No tiene un "valor en
-  // crédito" propio: al canjear, cubre el precio de UNA butaca común de la
-  // función que se esté comprando (butacas.component lo calcula en vivo).
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
     puntos_requeridos: [500, [Validators.required, Validators.min(1)]],
@@ -42,7 +39,8 @@ export class AdminRecompensasComponent {
     this.cargando.set(true);
     this.error.set(null);
     try {
-      this.recompensas.set((await this.recompensasService.listarTodas()).filter((r) => r.tipo === 'entrada'));
+      const todas = await this.recompensasService.listarTodas();
+      this.recompensa.set(todas.find((r) => r.tipo === 'entrada') ?? null);
     } catch {
       this.error.set('No pudimos cargar las recompensas.');
     } finally {
@@ -50,14 +48,13 @@ export class AdminRecompensasComponent {
     }
   }
 
-  nuevaRecompensa(): void {
-    this.recompensaEditando.set(null);
-    this.form.reset({ nombre: '', puntos_requeridos: 500, activo: true });
+  // Solo se ofrece cuando todavía no existe la recompensa de entrada.
+  configurar(): void {
+    this.form.reset({ nombre: 'Entrada gratis', puntos_requeridos: 500, activo: true });
     this.mostrarFormulario.set(true);
   }
 
   editar(recompensa: Recompensa): void {
-    this.recompensaEditando.set(recompensa);
     this.form.reset({
       nombre: recompensa.nombre,
       puntos_requeridos: recompensa.puntos_requeridos,
@@ -81,7 +78,7 @@ export class AdminRecompensasComponent {
     this.guardando.set(true);
     this.error.set(null);
     try {
-      const editando = this.recompensaEditando();
+      const editando = this.recompensa();
       if (editando) {
         await this.recompensasService.actualizar(editando.id, datos);
       } else {
@@ -93,19 +90,6 @@ export class AdminRecompensasComponent {
       this.error.set(error instanceof Error ? error.message : 'No pudimos guardar la recompensa.');
     } finally {
       this.guardando.set(false);
-    }
-  }
-
-  async eliminar(recompensa: Recompensa): Promise<void> {
-    const confirmado = await this.confirmDialog.confirmar(`¿Eliminar "${recompensa.nombre}"?`);
-    if (!confirmado) return;
-
-    this.error.set(null);
-    try {
-      await this.recompensasService.eliminar(recompensa.id);
-      await this.cargar();
-    } catch (error) {
-      this.error.set(error instanceof Error ? error.message : 'No pudimos eliminar la recompensa.');
     }
   }
 }
