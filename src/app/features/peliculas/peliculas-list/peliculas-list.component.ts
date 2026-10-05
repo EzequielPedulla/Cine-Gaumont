@@ -46,6 +46,14 @@ export class PeliculasListComponent {
   readonly alertasActivas = signal<ReadonlySet<string>>(new Set());
   readonly preciosPreventa = signal<ReadonlyMap<string, number>>(new Map());
 
+  // Aviso de estreno: películas que el usuario marcó con "Avisarme" y que ya
+  // se estrenaron (fecha_estreno <= hoy). No hay envío de mail/push, el aviso
+  // se muestra acá al abrir la cartelera; al descartarlo se borra la alerta
+  // de alertas_estreno, así no vuelve a aparecer.
+  readonly estrenosAvisados = computed(() =>
+    this.peliculas().filter((p) => this.alertasActivas().has(p.id) && p.fecha_estreno && p.fecha_estreno <= this.hoy)
+  );
+
   readonly generosDisponibles = computed<Genero[]>(() => {
     const mapa = new Map<string, Genero>();
     for (const pelicula of this.peliculas()) {

@@ -1,4 +1,11 @@
 <section class="cartelera">
+  @for (estreno of estrenosAvisados(); track estreno.id) {
+    <div class="aviso-estreno" role="status">
+      <span><i class="ph ph-bell-ringing"></i> ¡Ya se estrenó <strong>{{ estreno.titulo }}</strong>, la película que querías ver!</span>
+      <button type="button" class="aviso-estreno__cerrar" (click)="toggleAvisarme(estreno.id)">Entendido</button>
+    </div>
+  }
+
   <h1>Cartelera</h1>
 
   <div class="filtros">
